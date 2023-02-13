@@ -9,7 +9,6 @@ class UserService {
   /* 注册操作 */
   async UserRegister(data: RegisterData): Promise<UserType> {
     const newUser = await User.create({ ...data })
-
     return newUser.dataValues
   }
 

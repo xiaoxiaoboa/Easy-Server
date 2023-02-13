@@ -13,6 +13,9 @@ export interface RegisterData {
   nick_name: string
   email: string
   passwd: string
+  avatar: string
+  profile_img: string
+  createAt: string
 }
 export interface LoginData {
   email: string
@@ -24,6 +27,8 @@ export interface UserType {
   nick_name: string
   email: string
   passwd: string
+  avatar: string
+  profile_img: string
   createAt: string
   updateAt: string
 }

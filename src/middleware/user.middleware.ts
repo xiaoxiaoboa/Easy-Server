@@ -20,7 +20,6 @@ export const loginIsExistVerify = async (
   try {
     const existedData = await UserIsExist(data.email)
     if (!existedData.isExist) {
-      ctx.status = 400
       ctx.body = response(0, "用户不存在", data)
       return
     }
@@ -40,7 +39,6 @@ export const registerIsExistVerify = async (
   try {
     const existedData = await UserIsExist(data.email)
     if (existedData.isExist) {
-      ctx.status = 400
       ctx.body = response(0, "用户已存在", data)
       return
     }
@@ -60,6 +58,7 @@ export const bcryptPwd = async (ctx: CommonControllerCTX, next: CommonController
     const newData = { ...data, user_id: nanoid(11), passwd: hashedPwd }
     ctx.request.body = newData
   } catch (err) {
+    ctx.status = 500
     ctx.body = response(0, "密码加密出错，请重试", err)
     return
   }
