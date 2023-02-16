@@ -9,7 +9,7 @@ import bcrypt from "bcrypt"
 import { nanoid } from "nanoid"
 import response from "../util/response.js"
 
-const { UserIsExist } = userService
+const { QueryUser } = userService
 
 /* 登录验证 */
 export const loginIsExistVerify = async (
@@ -18,8 +18,8 @@ export const loginIsExistVerify = async (
 ) => {
   const data: LoginData = ctx.request.body
   try {
-    const existedData = await UserIsExist(data.email)
-    if (!existedData.isExist) {
+    const existedData = await QueryUser({ email: data.email })
+    if (!existedData) {
       ctx.body = response(0, "用户不存在", data)
       return
     }
@@ -37,8 +37,8 @@ export const registerIsExistVerify = async (
 ) => {
   const data: LoginData = ctx.request.body
   try {
-    const existedData = await UserIsExist(data.email)
-    if (existedData.isExist) {
+    const existedData = await QueryUser({ email: data.email })
+    if (existedData) {
       ctx.body = response(0, "用户已存在", data)
       return
     }

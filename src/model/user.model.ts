@@ -31,13 +31,19 @@ const User = seq.define(
       type: DataTypes.STRING,
       allowNull: false,
       unique: false,
-      comment: '用户头像'
+      comment: "用户头像"
     },
     profile_img: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
-      comment: '用户背景图'
+      unique: false,
+      comment: "用户背景图"
+    },
+    profile_blurImg: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: false,
+      comment: "处理过的用户背景图"
     }
   },
   { tableName: "users" }
