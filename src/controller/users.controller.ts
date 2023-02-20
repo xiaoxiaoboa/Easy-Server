@@ -58,7 +58,7 @@ class UsersController {
 
   async alterationCover(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
     const requestData: AlterationCoverType = ctx.request.body
-    const keys = Object.keys(requestData.base64)
+    const filesName: string[] = []
 
     try {
       for (let item in requestData.base64) {
@@ -68,16 +68,18 @@ class UsersController {
         /* 将base64转换为Buffer */
         const buf = Buffer.from(base64, "base64")
 
+        const fileName = item + Date.now()
         /* 保存到本地 */
         await sharp(buf).toFile(
-          `${process.cwd()}/data/resource/images/${requestData.user_id}/${item}.webp`
+          `${process.cwd()}/data/resource/images/${requestData.user_id}/${fileName}.webp`
         )
+        filesName.push(fileName)
       }
 
       /* 图片的地址 */
       const path = {
-        profile_img: `/images/${requestData.user_id}/${keys[0]}.webp`,
-        profile_blurImg: `/images/${requestData.user_id}/${keys[1]}.webp`
+        profile_img: `/images/${requestData.user_id}/${filesName[0]}.webp`,
+        profile_blurImg: `/images/${requestData.user_id}/${filesName[1]}.webp`
       }
 
       /* 更新数据库 */
@@ -85,8 +87,6 @@ class UsersController {
 
       /* 返回更新后的用户信息 */
       const userRes = await QueryUser({ user_id: requestData.user_id })
-
-      
 
       const { passwd, ...result } = userRes?.dataValues
       ctx.body = response(1, "修改成功", result)

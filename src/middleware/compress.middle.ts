@@ -15,7 +15,6 @@ const compressImg = async (ctx: CommonControllerCTX, next: CommonControllerNEXT)
 
     const buffered = await sharp(buf)
       .blur(60)
-      // .toFormat("jpeg")
       .resize({ width: 340, fit: "cover" })
       .toBuffer()
 

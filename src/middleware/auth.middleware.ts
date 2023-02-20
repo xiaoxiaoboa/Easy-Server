@@ -11,8 +11,9 @@ export const auth = async (ctx: CommonControllerCTX, next: CommonControllerNEXT)
     const user = jwt.verify(token!, secert_key!)
     ctx.state.user = user
   } catch (err) {
+    ctx.status = 400
     ctx.body = response(0, "token认证失败", err)
-    return
+    return err
   }
 
   await next()

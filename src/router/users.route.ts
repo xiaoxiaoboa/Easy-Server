@@ -13,7 +13,7 @@ const usersRouter = new Router()
 
 usersRouter.post("/login", loginIsExistVerify, login)
 usersRouter.post("/register", registerIsExistVerify, bcryptPwd, register)
-usersRouter.post("/cover", alterationCover)
+usersRouter.post("/cover", auth, alterationCover)
 
 /* 测试token */
 usersRouter.post("/test", auth, (ctx, next) => {
