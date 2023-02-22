@@ -1,10 +1,7 @@
 import response from "../util/response.js"
 import sharp from "sharp"
-import {
-  CommonControllerCTX,
-  CommonControllerNEXT,
-  CompressRequestType
-} from "../types/types.js"
+import { CommonControllerCTX, CommonControllerNEXT } from "../types/types.js"
+import { CompressRequestType } from "user.type.js"
 
 const compressImg = async (ctx: CommonControllerCTX, next: CommonControllerNEXT) => {
   const requestData: CompressRequestType = ctx.request.body

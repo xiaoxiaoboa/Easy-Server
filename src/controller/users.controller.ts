@@ -1,11 +1,4 @@
-import {
-  CommonControllerNEXT,
-  CommonControllerCTX,
-  RegisterData,
-  LoginData,
-  UserType,
-  AlterationCoverType
-} from "../types/types.js"
+import { CommonControllerNEXT, CommonControllerCTX } from "../types/types.js"
 import userService from "../service/user.service.js"
 import jwt from "jsonwebtoken"
 import { secert_key } from "../config/env.js"
@@ -13,8 +6,17 @@ import response from "../util/response.js"
 import getDefaultImg from "../util/getDefaultImg.js"
 import fs from "fs/promises"
 import sharp from "sharp"
+import {
+  AlterationCoverType,
+  LoginData,
+  QueryUserParamsType,
+  RegisterData,
+  UserType
+} from "user.type.js"
+import { feedTypeRestore } from "../util/conversionFeedType.js"
+import { Feed } from "feed.type.js"
 
-const { UserRegister, UserLogin, QueryUser, updateUser } = userService
+const { UserRegister, UserLogin, QueryUser, UpdateUser, QueryUserFeeds } = userService
 
 class UsersController {
   /* 登录 */
@@ -56,6 +58,7 @@ class UsersController {
     }
   }
 
+  /* 修改封面 */
   async alterationCover(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
     const requestData: AlterationCoverType = ctx.request.body
     const filesName: string[] = []
@@ -83,7 +86,7 @@ class UsersController {
       }
 
       /* 更新数据库 */
-      await updateUser(requestData.user_id, path)
+      await UpdateUser(requestData.user_id, path)
 
       /* 返回更新后的用户信息 */
       const userRes = await QueryUser({ user_id: requestData.user_id })
@@ -93,6 +96,40 @@ class UsersController {
     } catch (err) {
       ctx.status = 500
       ctx.body = response(0, "修改失败", err)
+    }
+  }
+
+  /* 查询用户的帖子 */
+  async queryFeeds(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
+    const data: { user_id: string } = ctx.request.body
+    try {
+      const res = await QueryUserFeeds(data.user_id)
+      const feed_user = await QueryUser({ user_id: data.user_id })
+
+      const feeds: Feed[] = res.map(obj => ({
+        feed_user: feed_user?.dataValues as UserType,
+        feed: feedTypeRestore(obj.dataValues)
+      }))
+
+      ctx.body = response(1, "已找到用户的所有帖子", feeds)
+    } catch (err) {
+      ctx.status = 500
+      ctx.body = response(0, "查找帖子失败", err)
+    }
+  }
+
+  /* 查询用户 */
+  async queryUser(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
+    const requestData = ctx.request.body
+    console.log(requestData)
+    try {
+      const res = await QueryUser(requestData)
+      const { passwd, ...result } = res?.dataValues as UserType
+
+      ctx.body = response(1, "找到用户", result)
+    } catch (err) {
+      ctx.status = 500
+      ctx.body = response(0, "未找到用户", err)
     }
   }
 }

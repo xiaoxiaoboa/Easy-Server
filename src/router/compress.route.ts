@@ -1,5 +1,5 @@
 import Router from "koa-router"
-import compress from "../middleware/compress.middle.js"
+import compress from "../controller/compress.controller.js"
 import { auth } from "../middleware/auth.middleware.js"
 
 const compressRouter = new Router()

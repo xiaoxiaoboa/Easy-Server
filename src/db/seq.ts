@@ -8,7 +8,11 @@ const { host, port, root, pwd, db } = mysql
 const seq = new Sequelize(db, root, pwd, {
   host: host,
   dialect: "mysql",
-  timezone: '+08:00'
+  timezone: "+08:00",
+  dialectOptions: {
+    dateStrings: true,
+    typeCast: true
+  }
 })
 
 seq

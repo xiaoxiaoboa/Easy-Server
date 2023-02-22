@@ -7,13 +7,16 @@ import {
 } from "../middleware/user.middleware.js"
 import { auth } from "../middleware/auth.middleware.js"
 
-const { login, register, alterationCover } = usersController
+const { login, register, alterationCover, queryFeeds, queryUser } = usersController
 
 const usersRouter = new Router()
 
-usersRouter.post("/login", loginIsExistVerify, login)
-usersRouter.post("/register", registerIsExistVerify, bcryptPwd, register)
-usersRouter.post("/cover", auth, alterationCover)
+usersRouter
+  .post("/login", loginIsExistVerify, login)
+  .post("/register", registerIsExistVerify, bcryptPwd, register)
+  .post("/cover", auth, alterationCover)
+  .post("/feeds", auth, queryFeeds)
+  .post("/user", auth, queryUser)
 
 /* 测试token */
 usersRouter.post("/test", auth, (ctx, next) => {

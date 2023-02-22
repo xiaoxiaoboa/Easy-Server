@@ -1,13 +1,9 @@
 import userService from "../service/user.service.js"
-import {
-  CommonControllerNEXT,
-  CommonControllerCTX,
-  LoginData,
-  RegisterData
-} from "../types/types.js"
+import { CommonControllerNEXT, CommonControllerCTX } from "../types/types.js"
 import bcrypt from "bcrypt"
 import { nanoid } from "nanoid"
 import response from "../util/response.js"
+import { LoginData, RegisterData } from "user.type.js"
 
 const { QueryUser } = userService
 
