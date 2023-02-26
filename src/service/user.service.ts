@@ -6,7 +6,6 @@ import User from "../model/user.model.js"
 import Feed from "../model/feed.model.js"
 import bcrypt from "bcrypt"
 import { LoginData, QueryUserParamsType, RegisterData, UserType } from "user.type.js"
-import { FeedType } from "../types/feed.type.js"
 
 class UserService {
   /* 注册操作 */
@@ -28,7 +27,6 @@ class UserService {
         ...params
       }
     })
-
     return user
   }
 
@@ -44,7 +42,7 @@ class UserService {
   /* 查询用户帖子 */
   async QueryUserFeeds(user_id: string) {
     const res = await Feed.findAll({
-      where: { user_id }
+      where: { feed_userID: user_id }
     })
     return res
   }

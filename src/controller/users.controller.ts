@@ -6,17 +6,15 @@ import response from "../util/response.js"
 import getDefaultImg from "../util/getDefaultImg.js"
 import fs from "fs/promises"
 import sharp from "sharp"
+import { AlterationCoverType, LoginData, RegisterData, UserType } from "user.type.js"
 import {
-  AlterationCoverType,
-  LoginData,
-  QueryUserParamsType,
-  RegisterData,
-  UserType
-} from "user.type.js"
-import { feedTypeRestore } from "../util/conversionFeedType.js"
-import { Feed } from "feed.type.js"
+  full_path,
+  dir_resource,
+  path_images,
+  path_videos
+} from "../constant/path.constant.js"
 
-const { UserRegister, UserLogin, QueryUser, UpdateUser, QueryUserFeeds } = userService
+const { UserRegister, UserLogin, QueryUser, UpdateUser } = userService
 
 class UsersController {
   /* 登录 */
@@ -46,7 +44,10 @@ class UsersController {
       const res = await UserRegister({ ...data, ...defaultValue })
       const { passwd, ...result } = res
 
-      await fs.mkdir(`${process.cwd()}/data/resource/images/${result.user_id}/`, {
+      await fs.mkdir(`${dir_resource}${path_images}${result.user_id}/`, {
+        recursive: true
+      })
+      await fs.mkdir(`${dir_resource}${path_videos}${result.user_id}/`, {
         recursive: true
       })
 
@@ -74,7 +75,7 @@ class UsersController {
         const fileName = item + Date.now()
         /* 保存到本地 */
         await sharp(buf).toFile(
-          `${process.cwd()}/data/resource/images/${requestData.user_id}/${fileName}.webp`
+          `${dir_resource}${path_images}${requestData.user_id}/${fileName}.webp`
         )
         filesName.push(fileName)
       }
@@ -96,25 +97,6 @@ class UsersController {
     } catch (err) {
       ctx.status = 500
       ctx.body = response(0, "修改失败", err)
-    }
-  }
-
-  /* 查询用户的帖子 */
-  async queryFeeds(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
-    const data: { user_id: string } = ctx.request.body
-    try {
-      const res = await QueryUserFeeds(data.user_id)
-      const feed_user = await QueryUser({ user_id: data.user_id })
-
-      const feeds: Feed[] = res.map(obj => ({
-        feed_user: feed_user?.dataValues as UserType,
-        feed: feedTypeRestore(obj.dataValues)
-      }))
-
-      ctx.body = response(1, "已找到用户的所有帖子", feeds)
-    } catch (err) {
-      ctx.status = 500
-      ctx.body = response(0, "查找帖子失败", err)
     }
   }
 

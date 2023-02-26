@@ -11,7 +11,7 @@ const Feed = seq.define(
       unique: true,
       comment: "feed ID"
     },
-    user_id: {
+    feed_userID: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: false,

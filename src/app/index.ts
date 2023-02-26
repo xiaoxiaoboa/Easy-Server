@@ -5,7 +5,6 @@ import staticServe from "koa-static"
 import usersRouter from "../router/users.route.js"
 import compressRouter from "../router/compress.route.js"
 import feedRouter from "../router/feed.route.js"
-import uploadRouter from "../router/feedAttach.route.js"
 
 const app = new Koa()
 
@@ -21,10 +20,6 @@ app.use(
     }
   })
 )
-app
-  .use(usersRouter.routes())
-  .use(compressRouter.routes())
-  .use(feedRouter.routes())
-  .use(uploadRouter.routes())
+app.use(usersRouter.routes()).use(compressRouter.routes()).use(feedRouter.routes())
 
 export default app

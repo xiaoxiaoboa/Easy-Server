@@ -1,5 +1,4 @@
-import { FeedType,FeedTypeJSON } from "feed.type.js"
-import { Json } from "sequelize/types/utils"
+import { FeedType, FeedTypeJSON, Feed_attach } from "feed.type.js"
 
 export const feedTypeToJson = (data: FeedType): FeedTypeJSON => {
   return {
@@ -10,12 +9,12 @@ export const feedTypeToJson = (data: FeedType): FeedTypeJSON => {
   }
 }
 
-
 export const feedTypeRestore = (data: FeedTypeJSON): FeedType => {
+  data.feed_liked
   return {
     ...data,
-    feed_liked: JSON.parse(data.feed_liked) as string[],
-    feed_comment: JSON.parse(data.feed_comment) as string[],
-    feed_attach: JSON.parse(data.feed_attach) as string[]
+    feed_liked: JSON.parse(data.feed_liked),
+    feed_comment: JSON.parse(data.feed_comment),
+    feed_attach: JSON.parse(data.feed_attach)
   }
 }

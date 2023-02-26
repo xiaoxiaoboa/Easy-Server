@@ -8,8 +8,9 @@ export interface Feed {
 
 export interface FeedType {
   feed_id: string
+  feed_userID: string
   feed_text: string
-  feed_attach: string[]
+  feed_attach: Feed_attach[]
   feed_liked: string[]
   feed_likedCount: number
   feed_comment: string[]
@@ -17,8 +18,13 @@ export interface FeedType {
   createdAt: string
   updatedAt: string
 }
+export interface Feed_attach {
+  id: string
+  attach_type: "image" | "video"
+  attach_link: string
+}
 
 /* 将其中feed_liked,feed_attach和feed_comment的类型变为string并生成新类型 */
 export type FeedTypeJSON = {
-  [key in keyof FeedType]: FeedType[key] extends string[] ? string : FeedType[key]
+  [key in keyof FeedType]: FeedType[key] extends number ? number : string
 }

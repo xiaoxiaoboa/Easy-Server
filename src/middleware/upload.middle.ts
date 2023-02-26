@@ -2,8 +2,12 @@ import response from "../util/response.js"
 import { CommonControllerCTX, CommonControllerNEXT } from "types"
 import { File } from "../types/upload.type.js"
 import fs from "fs/promises"
-
-const path = process.cwd()
+import {
+  dir_resource,
+  dir_upload,
+  path_images,
+  path_videos
+} from "../constant/path.constant.js"
 
 export const upload = async (ctx: CommonControllerCTX, next: CommonControllerNEXT) => {
   const data = ctx.request.files
@@ -21,13 +25,13 @@ export const upload = async (ctx: CommonControllerCTX, next: CommonControllerNEX
 
         if (fileType?.includes("image")) {
           await fs.rename(
-            `${path}/data/upload/${fileName}`,
-            `${path}/data/resource/images/${user_id}/${fileName}`
+            `${dir_upload}/${fileName}`,
+            `${dir_resource}${path_images}${user_id}/${fileName}`
           )
         } else if (fileType?.includes("video")) {
           await fs.rename(
-            `${path}/data/upload/${fileName}`,
-            `${path}/data/resource/videos/${user_id}/${fileName}`
+            `${dir_upload}/${fileName}`,
+            `${dir_resource}${path_videos}${user_id}/${fileName}`
           )
         }
       }
