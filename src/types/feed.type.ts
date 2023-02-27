@@ -28,3 +28,8 @@ export interface Feed_attach {
 export type FeedTypeJSON = {
   [key in keyof FeedType]: FeedType[key] extends number ? number : string
 }
+
+export interface likeFeedRequestType {
+  feed_id: string
+  user_id: string
+}

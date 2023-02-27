@@ -1,6 +1,6 @@
 import feedService from "../service/feed.service.js"
 import { CommonControllerCTX, CommonControllerNEXT } from "../types/types.js"
-import { Feed, FeedType, Feed_attach } from "../types/feed.type.js"
+import { Feed, FeedType, Feed_attach, likeFeedRequestType } from "../types/feed.type.js"
 import response from "../util/response.js"
 import { feedTypeToJson, feedTypeRestore } from "../util/conversionFeedType.js"
 import { nanoid } from "nanoid"
@@ -9,7 +9,7 @@ import userService from "../service/user.service.js"
 import { UserType } from "user.type.js"
 import { path_images, path_videos } from "../constant/path.constant.js"
 
-const { CreateFeed, GetAllFeeds } = feedService
+const { CreateFeed, GetAllFeeds, modifyFeed_like, queryOneFeed } = feedService
 const { QueryUser, QueryUserFeeds } = userService
 
 class FeedController {
@@ -71,13 +71,12 @@ class FeedController {
           return
       }
     })
-    console.log(filesData)
 
     ctx.body = response(1, "上传成功", filesData)
   }
 
   /* 查询用户的帖子 */
-  async queryFeeds(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
+  async queryUserFeeds(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
     const data: { user_id: string } = ctx.request.body
     try {
       const res = await QueryUserFeeds(data.user_id)
@@ -115,6 +114,37 @@ class FeedController {
     } catch (err) {
       ctx.status = 500
       ctx.body = response(0, "获取失败", err)
+    }
+  }
+
+  /* 帖子点赞 */
+  async likeFeed(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
+    const data: likeFeedRequestType = ctx.request.body
+
+    try {
+      const findRes = feedTypeRestore(await queryOneFeed(data.feed_id))
+      let feed_likedCount = findRes.feed_likedCount
+
+      const isLiked = findRes.feed_liked.includes(data.user_id)
+      let newData: string[] = []
+
+      if (isLiked) {
+        newData = findRes.feed_liked.filter(item => item !== data.user_id)
+        feed_likedCount -= 1
+      } else {
+        newData = [...findRes.feed_liked, data.user_id]
+        feed_likedCount += 1
+      }
+
+      const modifyRes = await modifyFeed_like(
+        data.feed_id,
+        JSON.stringify(newData),
+        feed_likedCount
+      )
+      ctx.body = response(1, `${isLiked ? "取消点赞" : "点赞成功"}`, modifyRes)
+    } catch (err) {
+      ctx.status = 500
+      ctx.body = response(0, "操作失败", err)
     }
   }
 }
