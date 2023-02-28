@@ -58,6 +58,10 @@ const Feed = seq.define(
 )
 
 // Feed.sync({ force: true })
-// Feed.belongsTo(User, { targetKey: "user_id", foreignKey: "user_id", onDelete: "CASCADE" })
+// Feed.belongsTo(User, {
+//   targetKey: "user_id",
+//   foreignKey: "feed_userID",
+//   onDelete: "CASCADE"
+// })
 
 export default Feed

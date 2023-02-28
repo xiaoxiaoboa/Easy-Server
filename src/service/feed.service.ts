@@ -16,10 +16,14 @@ class FeedService {
   }
   /* 查找一个帖子 */
   async queryOneFeed(feed_id: string): Promise<FeedTypeJSON> {
-    const res = await Feed.findOne({
-      where: { feed_id }
-    })
-    return res?.dataValues
+    try {
+      const res = await Feed.findOne({
+        where: { feed_id }
+      })
+      return res?.dataValues
+    } catch (err) {
+      throw Error("", { cause: err })
+    }
   }
 
   /* 点赞 */
@@ -31,6 +35,18 @@ class FeedService {
       }
     )
     return result
+  }
+
+  /* 删除帖子 */
+  async modifyFeed_delete(feed_id: string): Promise<number> {
+    try {
+      const res = await Feed.destroy({
+        where: { feed_id }
+      })
+      return res
+    } catch (err) {
+      throw Error("", { cause: err })
+    }
   }
 }
 

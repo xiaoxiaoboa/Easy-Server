@@ -7,9 +7,11 @@ import { nanoid } from "nanoid"
 import { File } from "../types/upload.type.js"
 import userService from "../service/user.service.js"
 import { UserType } from "user.type.js"
-import { path_images, path_videos } from "../constant/path.constant.js"
+import { dir_resource, path_images, path_videos } from "../constant/path.constant.js"
+import fs from "fs/promises"
 
-const { CreateFeed, GetAllFeeds, modifyFeed_like, queryOneFeed } = feedService
+const { CreateFeed, GetAllFeeds, modifyFeed_like, queryOneFeed, modifyFeed_delete } =
+  feedService
 const { QueryUser, QueryUserFeeds } = userService
 
 class FeedController {
@@ -84,7 +86,7 @@ class FeedController {
 
       const feeds: Feed[] = res
         .map(obj => ({
-          feed_user: feed_user?.dataValues as UserType,
+          feed_user: feed_user,
           feed: feedTypeRestore(obj.dataValues)
         }))
         .reverse()
@@ -106,7 +108,7 @@ class FeedController {
         const userRes = await QueryUser({ user_id: item.feed_userID })
         const feed: Feed = {
           feed: item,
-          feed_user: userRes?.dataValues
+          feed_user: userRes
         }
         feeds.push(feed)
       }
@@ -145,6 +147,33 @@ class FeedController {
     } catch (err) {
       ctx.status = 500
       ctx.body = response(0, "操作失败", err)
+    }
+  }
+
+  /* 删除帖子 */
+  async deleteFeed(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
+    const data = ctx.request.body
+
+    try {
+      const findRes = feedTypeRestore(await queryOneFeed(data.feed_id))
+      const attach = findRes.feed_attach
+
+      if (findRes.feed_userID !== data.user_id) {
+        throw Error("帖子和用户不匹配")
+      }
+
+      if (attach.length > 0) {
+        for (let item of attach) {
+          await fs.rm(dir_resource + item.attach_link)
+        }
+      }
+
+      const delRes = await modifyFeed_delete(data.feed_id)
+
+      ctx.body = response(1, "删除成功", delRes)
+    } catch (err) {
+      ctx.status = 500
+      ctx.body = JSON.stringify(response(0, "删除失败", `${err}`))
     }
   }
 }

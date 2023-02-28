@@ -6,7 +6,13 @@ import response from "../util/response.js"
 import getDefaultImg from "../util/getDefaultImg.js"
 import fs from "fs/promises"
 import sharp from "sharp"
-import { AlterationCoverType, LoginData, RegisterData, UserType } from "user.type.js"
+import {
+  AlterationCoverType,
+  hashedPwdType,
+  LoginData,
+  RegisterData,
+  UserType
+} from "user.type.js"
 import {
   full_path,
   dir_resource,
@@ -22,9 +28,9 @@ class UsersController {
     const data: LoginData = ctx.request.body
     try {
       const existedData = await QueryUser({ email: data.email })
-      const res = await UserLogin(data, existedData?.dataValues!)
+      const res = await UserLogin(data, existedData)
       if (res) {
-        const { passwd, ...result } = existedData?.dataValues!
+        const { passwd, ...result } = existedData
         const token = jwt.sign(result, secert_key!)
         ctx.body = response(1, "登录成功", { result, token })
       } else {
@@ -38,18 +44,18 @@ class UsersController {
 
   /* 注册 */
   async register(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
-    const data: RegisterData = ctx.request.body
+    const data: hashedPwdType = ctx.request.body
     const defaultValue = await getDefaultImg()
     try {
+      await fs.mkdir(`${dir_resource}${path_images}${data.user_id}/`, {
+        recursive: true
+      })
+      await fs.mkdir(`${dir_resource}${path_videos}${data.user_id}/`, {
+        recursive: true
+      })
+
       const res = await UserRegister({ ...data, ...defaultValue })
       const { passwd, ...result } = res
-
-      await fs.mkdir(`${dir_resource}${path_images}${result.user_id}/`, {
-        recursive: true
-      })
-      await fs.mkdir(`${dir_resource}${path_videos}${result.user_id}/`, {
-        recursive: true
-      })
 
       ctx.body = { code: 1, message: "注册成功", data: result }
       ctx.body = response(1, "注册成功", result)
@@ -92,7 +98,7 @@ class UsersController {
       /* 返回更新后的用户信息 */
       const userRes = await QueryUser({ user_id: requestData.user_id })
 
-      const { passwd, ...result } = userRes?.dataValues
+      const { passwd, ...result } = userRes
       ctx.body = response(1, "修改成功", result)
     } catch (err) {
       ctx.status = 500
@@ -105,14 +111,18 @@ class UsersController {
     const requestData = ctx.request.body
     console.log(requestData)
     try {
-      const res = await QueryUser(requestData)
-      const { passwd, ...result } = res?.dataValues as UserType
+      const { passwd, ...result } = await QueryUser(requestData)
 
       ctx.body = response(1, "找到用户", result)
     } catch (err) {
       ctx.status = 500
       ctx.body = response(0, "未找到用户", err)
     }
+  }
+
+  /* 收藏帖子 */
+  async modifyFeed_fav(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
+    const data = ctx.request.body
   }
 }
 

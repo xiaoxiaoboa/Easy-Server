@@ -36,3 +36,7 @@ export interface AlterationCoverType {
 export interface QueryUserParamsType {
   [key: string]: string
 }
+
+export interface hashedPwdType extends RegisterData {
+  user_id: string
+}

@@ -5,11 +5,17 @@ import { Model } from "sequelize"
 import User from "../model/user.model.js"
 import Feed from "../model/feed.model.js"
 import bcrypt from "bcrypt"
-import { LoginData, QueryUserParamsType, RegisterData, UserType } from "user.type.js"
+import {
+  hashedPwdType,
+  LoginData,
+  QueryUserParamsType,
+  RegisterData,
+  UserType
+} from "user.type.js"
 
 class UserService {
   /* 注册操作 */
-  async UserRegister(data: RegisterData): Promise<UserType> {
+  async UserRegister(data: hashedPwdType): Promise<UserType> {
     const newUser = await User.create({ ...data })
     return newUser.dataValues
   }
@@ -21,13 +27,13 @@ class UserService {
   }
 
   /* 查询用户 */
-  async QueryUser(params: QueryUserParamsType) {
+  async QueryUser(params: QueryUserParamsType): Promise<UserType> {
     const user = await User.findOne({
       where: {
         ...params
       }
     })
-    return user
+    return user?.dataValues
   }
 
   /* 更新用户 */
