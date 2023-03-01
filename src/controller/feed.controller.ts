@@ -7,39 +7,57 @@ import { nanoid } from "nanoid"
 import { File } from "../types/upload.type.js"
 import userService from "../service/user.service.js"
 import { UserType } from "user.type.js"
-import { path_images, path_videos } from "../constant/path.constant.js"
+import { path_images, path_videos, dir_resource } from "../constant/path.constant.js"
+import fs from "fs/promises"
+import seq from "../db/seq.js"
+import feed_attachService from "../service/feed_attach.service.js"
+import feed_likedService from "../service/feed_liked.service.js"
+import feed_commentService from "../service/feed_comment.service.js"
 
-const { CreateFeed, GetAllFeeds, modifyFeed_like, queryOneFeed } = feedService
+const { CreateFeed, GetAllFeeds, modifyFeed_like, queryOneFeed, modifyFeed_delete } =
+  feedService
 const { QueryUser, QueryUserFeeds } = userService
+const { create_attach } = feed_attachService
+const { create_like } = feed_likedService
+const { create_comment } = feed_commentService
 
 class FeedController {
   /* 发布帖子 */
   async publish(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
     const data = ctx.request.body
-    const user = ctx.state.user
 
-    const initData = {
-      feed_id: nanoid(12),
-      feed_text: "",
-      feed_attach: [],
-      feed_liked: [],
-      feed_likedCount: 0,
-      feed_comment: [],
-      feed_commentCount: 0
-    }
-
-    const newFeed = feedTypeToJson({ ...initData, ...data })
-
+    const feed_id = nanoid(12)
     try {
-      const res = await CreateFeed(newFeed)
-      const resData: Feed = {
-        feed_user: user,
-        feed: feedTypeRestore(res)
-      }
-      ctx.body = response(1, "已成功创建帖子", resData)
+      /* 使用事务 */
+      const result = await seq.transaction(async t => {
+        const feed = await CreateFeed({ ...data, feed_id: feed_id })
+
+        await create_attach({
+          feed_id,
+          feed_attach: JSON.stringify(data.feed_attach),
+          feed_attachCount: 0,
+          feed_userID: data.feed_userID
+        })
+        await create_like({
+          feed_id,
+          feed_userID: data.feed_userID,
+          feed_liked: JSON.stringify([]),
+          feed_likedCount: 0
+        })
+        await create_comment({
+          feed_id,
+          feed_userID: data.feed_userID,
+          feed_comment: JSON.stringify([]),
+          feed_commentCount: 0
+        })
+
+        return feed
+      })
+
+      ctx.body = result
     } catch (err) {
       ctx.status = 500
-      ctx.body = response(0, "创建帖子失败", err)
+      ctx.body = `${err}`
     }
   }
 
@@ -84,7 +102,7 @@ class FeedController {
 
       const feeds: Feed[] = res
         .map(obj => ({
-          feed_user: feed_user?.dataValues as UserType,
+          feed_user: feed_user,
           feed: feedTypeRestore(obj.dataValues)
         }))
         .reverse()
@@ -100,20 +118,21 @@ class FeedController {
   async queryAllFeeds(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
     try {
       const res = await GetAllFeeds()
-      const allFeeds: FeedType[] = res.map(item => feedTypeRestore(item.dataValues))
-      const feeds: Feed[] = []
-      for (let item of allFeeds) {
-        const userRes = await QueryUser({ user_id: item.feed_userID })
-        const feed: Feed = {
-          feed: item,
-          feed_user: userRes?.dataValues
-        }
-        feeds.push(feed)
-      }
-      ctx.body = response(1, "获取成功", feeds)
+      // const allFeeds: FeedType[] = res.map(item => feedTypeRestore(item.dataValues))
+      // const feeds: Feed[] = []
+      // for (let item of allFeeds) {
+      //   const userRes = await QueryUser({ user_id: item.feed_userID })
+      //   const feed: Feed = {
+      //     feed: item,
+      //     feed_user: userRes
+      //   }
+      //   feeds.push(feed)
+      // }
+      ctx.body = response(1, "获取成功", res)
     } catch (err) {
       ctx.status = 500
-      ctx.body = response(0, "获取失败", err)
+      console.log(err)
+      ctx.body = response(0, "获取失败", `${err}`)
     }
   }
 
@@ -145,6 +164,33 @@ class FeedController {
     } catch (err) {
       ctx.status = 500
       ctx.body = response(0, "操作失败", err)
+    }
+  }
+
+  /* 删除帖子 */
+  async deleteFeed(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
+    const data = ctx.request.body
+
+    try {
+      const findRes = feedTypeRestore(await queryOneFeed(data.feed_id))
+      const attach = findRes.feed_attach
+
+      if (findRes.feed_userID !== data.user_id) {
+        throw Error("帖子和用户不匹配")
+      }
+
+      if (attach.length > 0) {
+        for (let item of attach) {
+          await fs.rm(dir_resource + item.attach_link)
+        }
+      }
+
+      const delRes = await modifyFeed_delete(data.feed_id)
+
+      ctx.body = response(1, "删除成功", delRes)
+    } catch (err) {
+      ctx.status = 500
+      ctx.body = JSON.stringify(response(0, "删除失败", `${err}`))
     }
   }
 }

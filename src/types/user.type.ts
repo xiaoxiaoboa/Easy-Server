@@ -5,6 +5,7 @@ export interface RegisterData {
   avatar: string
   profile_img: string
   profile_blurImg: string
+  favourite_feeds: []
 }
 
 export interface LoginData {
@@ -35,4 +36,12 @@ export interface AlterationCoverType {
 
 export interface QueryUserParamsType {
   [key: string]: string
+}
+
+export interface hashedPwdType extends RegisterData {
+  user_id: string
+}
+
+export type UserTypeJSON = {
+  [key in keyof RegisterData]: RegisterData[key] extends number ? number : string
 }

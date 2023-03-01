@@ -1,5 +1,8 @@
 import { DataTypes } from "sequelize"
 import seq from "../db/seq.js"
+import Feed_attach from "./feed_attach.model.js"
+import Feed_Comment from "./feed_comment.model.js"
+import Feed_Liked from "./feed_liked.model.js"
 import User from "./user.model.js"
 
 const Feed = seq.define(
@@ -22,42 +25,18 @@ const Feed = seq.define(
       allowNull: true,
       unique: false,
       comment: "feed 内容"
-    },
-    feed_attach: {
-      type: DataTypes.JSON,
-      allowNull: true,
-      unique: false,
-      comment: "feed包含的图片或视频地址"
-    },
-    feed_liked: {
-      type: DataTypes.JSON,
-      allowNull: false,
-      unique: false,
-      comment: "feed被点赞的用户"
-    },
-    feed_likedCount: {
-      type: DataTypes.INTEGER.UNSIGNED,
-      allowNull: true,
-      unique: false,
-      comment: "feed被点赞的数量"
-    },
-    feed_comment: {
-      type: DataTypes.JSON,
-      allowNull: false,
-      unique: false,
-      comment: "feed的评论"
-    },
-    feed_commentCount: {
-      type: DataTypes.INTEGER.UNSIGNED,
-      allowNull: true,
-      unique: false,
-      comment: "feed被评论的数量"
     }
   },
   { tableName: "feed" }
 )
 
 // Feed.sync({ force: true })
-// Feed.belongsTo(User, { targetKey: "user_id", foreignKey: "user_id", onDelete: "CASCADE" })
+User.hasMany(Feed,{foreignKey: 'feed_userID', sourceKey: 'user_id'})
+Feed.belongsTo(User, {
+  targetKey: "user_id",
+  foreignKey: "feed_userID",
+  onDelete: "CASCADE"
+})
+
 
 export default Feed
