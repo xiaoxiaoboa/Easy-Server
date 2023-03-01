@@ -8,28 +8,32 @@ import User from "../model/user.model.js"
 
 class FeedService {
   /* 创建帖子 */
-  async CreateFeed(data: FeedTypeJSON): Promise<FeedTypeJSON> {
+  async CreateFeed(data: any): Promise<any> {
     const newFeed = await Feed.create({ ...data })
     return newFeed.dataValues
   }
 
   /* 获取所有帖子 */
   async GetAllFeeds() {
-    // const allFeeds = await Feed.findAll({ order: [["createdAt", "DESC"]] })
     try {
       const allFeeds = await Feed.findAll({
-        // where: { feed_id: "WrSkhLeCjkoU" },
-        include: [{ model: Feed_Liked }, { model: Feed_Comment }, { model: Feed_attach }],
+        include: [
+          { model: Feed_Liked },
+          { model: Feed_Comment },
+          { model: Feed_attach },
+          { model: User }
+        ],
         order: [["createdAt", "DESC"]]
       })
-      return allFeeds
+
+      return JSON.stringify(allFeeds)
     } catch (err) {
       throw Error("", { cause: err })
     }
   }
 
   /* 查找一个帖子 */
-  async queryOneFeed(feed_id: string): Promise<FeedTypeJSON> {
+  async queryOneFeed(feed_id: string): Promise<any> {
     try {
       const res = await Feed.findOne({
         where: { feed_id }

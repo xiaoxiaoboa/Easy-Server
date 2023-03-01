@@ -18,13 +18,13 @@ const Feed_Comment = seq.define(
       unique: false,
       comment: "用户ID"
     },
-    feed_comment: {
+    comment: {
       type: DataTypes.JSON,
       allowNull: false,
       unique: false,
       comment: "feed的评论"
     },
-    feed_commentCount: {
+    count: {
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: true,
       unique: false,

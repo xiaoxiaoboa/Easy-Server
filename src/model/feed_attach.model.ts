@@ -18,11 +18,17 @@ const Feed_attach = seq.define(
       unique: false,
       comment: "用户ID"
     },
-    feed_attach: {
+    attach: {
       type: DataTypes.JSON,
       allowNull: true,
       unique: false,
       comment: "feed包含的图片或视频地址"
+    },
+    count: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      allowNull: true,
+      unique: false,
+      comment: "attach数量"
     }
   },
   { tableName: "feed_attach", timestamps: false }
@@ -30,7 +36,7 @@ const Feed_attach = seq.define(
 
 // Feed_attach.sync({ force: true })
 
-Feed.hasMany(Feed_attach, { foreignKey: "feed_id", sourceKey: "feed_id" })
+Feed.hasOne(Feed_attach, { foreignKey: "feed_id", sourceKey: "feed_id" })
 Feed_attach.belongsTo(Feed, {
   targetKey: "feed_id",
   foreignKey: "feed_id",
