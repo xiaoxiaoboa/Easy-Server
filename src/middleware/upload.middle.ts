@@ -15,8 +15,8 @@ export const upload = async (ctx: CommonControllerCTX, next: CommonControllerNEX
   const files = Object.values(data!)
 
   if (files.length === 0) {
-    ctx.body = response(0, "图片上传失败", null)
-    return
+    ctx.body = response(0, "没有图片或视频", null)
+    await next()
   } else {
     try {
       for (let item of files) {
@@ -38,7 +38,7 @@ export const upload = async (ctx: CommonControllerCTX, next: CommonControllerNEX
 
       ctx.body = response(1, "图片上传成功", null)
       ctx.request.body = files
-      next()
+      await next()
     } catch (err) {
       ctx.status = 500
       ctx.body = response(0, "图片上传失败", err)

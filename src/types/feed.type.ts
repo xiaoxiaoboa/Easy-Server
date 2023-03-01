@@ -1,35 +1,25 @@
-import User from "@/model/user.model"
-import { UserType } from "user.type"
+import { Feed_attachType, Feed_attachServiceType } from "./feed_attach.type.js"
+import { Feed_CommentType, Feed_CommentServiceType } from "./feed_comment.type.js"
+import { Feed_LikedServiceType, Feed_LikedType } from "./feed_liked.type.js"
+import { UserType } from "./user.type"
 
 export interface Feed {
-  feed: FeedType
-  feed_user: UserType
-}
-
-export interface FeedType {
   feed_id: string
   feed_userID: string
   feed_text: string
-  feed_attach: Feed_attach[]
-  feed_liked: string[]
-  feed_likedCount: number
-  feed_comment: string[]
-  feed_commentCount: number
+  user: UserType
   createdAt: string
   updatedAt: string
 }
-export interface Feed_attach {
-  id: string
-  attach_type: "image" | "video"
-  attach_link: string
+
+export interface FeedType extends Feed {
+  feed_liked: Feed_LikedType
+  feed_comment: Feed_CommentType
+  feed_attach: Feed_attachType
 }
 
-/* 将其中feed_liked,feed_attach和feed_comment的类型变为string并生成新类型 */
-export type FeedTypeJSON = {
-  [key in keyof FeedType]: FeedType[key] extends number ? number : string
-}
-
-export interface likeFeedRequestType {
-  feed_id: string
-  user_id: string
+export interface FeedTypeJSON extends Feed {
+  feed_liked: Feed_LikedServiceType
+  feed_comment: Feed_CommentServiceType
+  feed_attach: Feed_attachServiceType
 }

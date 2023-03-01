@@ -1,8 +1,9 @@
 import { DataTypes } from "sequelize"
 import seq from "../db/seq.js"
+import Feed from "./feed.model.js"
 
 const User = seq.define(
-  "user",
+  "users",
   {
     user_id: {
       type: DataTypes.STRING,
@@ -50,4 +51,5 @@ const User = seq.define(
 )
 
 // User.sync({ force: true })
+// User.hasMany(Feed, { foreignKey: "feed_userID", sourceKey: "user_id" })
 export default User

@@ -16,7 +16,6 @@ const getDefaultImg = async () => {
   const findImg = filesNames.filter(fileName =>
     fileName.includes(randomNum.toString())
   )[0]
-  console.log(findImg, randomNum)
 
   const profile_img = "/images/" + backgroundImg
   const avatar = "/images/" + findImg
