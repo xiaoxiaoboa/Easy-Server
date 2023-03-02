@@ -5,7 +5,7 @@ import { nanoid } from "nanoid"
 import response from "../util/response.js"
 import { LoginData, RegisterData } from "user.type.js"
 
-const { QueryUser } = userService
+const { queryUser } = userService
 
 /* 登录验证 */
 export const loginIsExistVerify = async (
@@ -14,7 +14,7 @@ export const loginIsExistVerify = async (
 ) => {
   const data: LoginData = ctx.request.body
   try {
-    const existedData = await QueryUser({ email: data.email })
+    const existedData = await queryUser({ email: data.email })
     if (!existedData) {
       ctx.body = response(0, "用户不存在", data)
       return
@@ -33,7 +33,7 @@ export const registerIsExistVerify = async (
 ) => {
   const data: LoginData = ctx.request.body
   try {
-    const existedData = await QueryUser({ email: data.email })
+    const existedData = await queryUser({ email: data.email })
     if (existedData) {
       ctx.body = response(0, "用户已存在", data)
       return

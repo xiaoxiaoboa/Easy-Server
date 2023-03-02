@@ -1,27 +1,36 @@
 import Feed_attach from "../model/feed_attach.model.js"
-import { feedTypeRestore } from "@/util/conversionFeedType.js"
 import Feed from "../model/feed.model.js"
-import { FeedType, FeedTypeJSON } from "../types/feed.type.js"
 import Feed_Liked from "../model/feed_liked.model.js"
 import Feed_Comment from "../model/feed_comment.model.js"
 import User from "../model/user.model.js"
+import { Feed_attachServiceType } from "../types/feed_attach.type.js"
+import { Feed_LikedServiceType } from "../types/feed_liked.type.js"
+import User_Favourite from "../model/user_favourite.model.js"
+import seq from "../db/seq.js"
 
 class FeedService {
   /* 创建帖子 */
-  async CreateFeed(data: any): Promise<any> {
-    const newFeed = await Feed.create({ ...data })
-    return newFeed.dataValues
+  async createFeed(data: any) {
+    try {
+      const newFeed = await Feed.create({ ...data })
+      return newFeed.dataValues
+    } catch (err) {
+      throw Error("", { cause: err })
+    }
   }
 
   /* 获取所有帖子 */
-  async GetAllFeeds() {
+  async getAllFeeds(limit: number, offset: number) {
     try {
       const allFeeds = await Feed.findAll({
+        limit: limit,
+        offset: offset,
         include: [
-          { model: Feed_Liked },
-          { model: Feed_Comment },
-          { model: Feed_attach },
-          { model: User }
+          Feed_Liked,
+          Feed_Comment,
+          Feed_attach,
+          { model: User_Favourite, attributes: ["user_id", "createdAt"] },
+          { model: User, attributes: ["user_id", "nick_name", "avatar"] }
         ],
         order: [["createdAt", "DESC"]]
       })
@@ -44,15 +53,31 @@ class FeedService {
     }
   }
 
+  /* 查询用户帖子 */
+  async queryUserFeeds(user_id: string) {
+    try {
+      const res = await Feed.findAll({
+        where: { feed_userID: user_id }
+      })
+      return res
+    } catch (err) {
+      throw Error("", { cause: err })
+    }
+  }
+
   /* 点赞 */
-  async modifyFeed_like(feed_id: string, feed_liked: string, feed_likedCount: number) {
-    const result = await Feed.update(
-      { feed_liked, feed_likedCount },
-      {
-        where: { feed_id }
-      }
-    )
-    return result
+  async modifyFeed_like(params: { feed_id: string; liked: string; count: number }) {
+    try {
+      const result = await Feed_Liked.update(
+        { ...params },
+        {
+          where: { feed_id: params.feed_id }
+        }
+      )
+      return result
+    } catch (err) {
+      throw Error("", { cause: err })
+    }
   }
 
   /* 删除帖子 */

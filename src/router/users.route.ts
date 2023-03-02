@@ -7,7 +7,7 @@ import {
 } from "../middleware/user.middleware.js"
 import { auth } from "../middleware/auth.middleware.js"
 
-const { login, register, alterationCover, queryUser } = usersController
+const { login, register, alterationCover, queryUser, favourite } = usersController
 
 const usersRouter = new Router()
 
@@ -16,6 +16,7 @@ usersRouter
   .post("/register", registerIsExistVerify, bcryptPwd, register)
   .post("/cover", auth, alterationCover)
   .post("/user", auth, queryUser)
+  .post("/fav", auth, favourite)
 
 /* 测试token */
 usersRouter.post("/test", auth, (ctx, next) => {

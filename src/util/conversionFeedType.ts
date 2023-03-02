@@ -1,37 +1,6 @@
 import { FeedType, FeedTypeJSON } from "feed.type.js"
 import { RegisterData, UserType, UserTypeJSON } from "user.type.js"
 
-export const feedTypeToJson = (data: any) => {
-  // return {
-  //   ...data,
-  //   feed_liked: JSON.stringify(data.feed_liked),
-  //   feed_comment: JSON.stringify(data.feed_comment),
-  //   feed_attach: JSON.stringify(data.feed_attach)
-  // }
-}
-
-export const feedTypeRestore = (data: any) => {
-  // return {
-  //   ...data,
-  //   feed_liked: JSON.parse(data.feed_liked),
-  //   feed_comment: JSON.parse(data.feed_comment),
-  //   feed_attach: JSON.parse(data.feed_attach)
-  // }
-}
-
-export const userTypeToJson = (data: RegisterData): UserTypeJSON => {
-  return {
-    ...data,
-    favourite_feeds: JSON.stringify(data.favourite_feeds)
-  }
-}
-export const userTypeRestore = (data: UserTypeJSON): RegisterData => {
-  return {
-    ...data,
-    favourite_feeds: JSON.parse(data.favourite_feeds)
-  }
-}
-
 /* 反序列化 */
 export const toParse = (param: FeedTypeJSON | FeedTypeJSON[]): FeedType | FeedType[] => {
   if (Array.isArray(param)) {
@@ -63,6 +32,7 @@ export const toParse = (param: FeedTypeJSON | FeedTypeJSON[]): FeedType | FeedTy
   }
 }
 
+/* 序列化 */
 export const toJson = (param: FeedType | FeedType[]): FeedTypeJSON | FeedTypeJSON[] => {
   if (Array.isArray(param)) {
     return param.map(item => ({

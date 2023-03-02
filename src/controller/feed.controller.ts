@@ -1,12 +1,9 @@
 import feedService from "../service/feed.service.js"
 import { CommonControllerCTX, CommonControllerNEXT } from "../types/types.js"
-import { Feed, FeedType } from "../types/feed.type.js"
 import response from "../util/response.js"
-import { feedTypeToJson, feedTypeRestore } from "../util/conversionFeedType.js"
 import { nanoid } from "nanoid"
 import { File } from "../types/upload.type.js"
 import userService from "../service/user.service.js"
-import { UserType } from "user.type.js"
 import { path_images, path_videos, dir_resource } from "../constant/path.constant.js"
 import fs from "fs/promises"
 import seq from "../db/seq.js"
@@ -14,12 +11,19 @@ import feed_attachService from "../service/feed_attach.service.js"
 import feed_likedService from "../service/feed_liked.service.js"
 import feed_commentService from "../service/feed_comment.service.js"
 import { toParse } from "../util/conversionFeedType.js"
+import { Feed_attach } from "feed_attach.type.js"
 
-const { CreateFeed, GetAllFeeds, modifyFeed_like, queryOneFeed, modifyFeed_delete } =
-  feedService
-const { QueryUser, QueryUserFeeds } = userService
-const { create_attach } = feed_attachService
-const { create_like } = feed_likedService
+const {
+  createFeed,
+  getAllFeeds,
+  modifyFeed_like,
+  queryOneFeed,
+  modifyFeed_delete,
+  queryUserFeeds
+} = feedService
+const { queryUser } = userService
+const { create_attach, queryOneAttach } = feed_attachService
+const { create_like, queryOneLiked } = feed_likedService
 const { create_comment } = feed_commentService
 
 class FeedController {
@@ -32,7 +36,7 @@ class FeedController {
     try {
       /* 使用事务 */
       const result = await seq.transaction(async t => {
-        const feed = await CreateFeed({ ...data, feed_id: feed_id })
+        const feed = await createFeed({ ...data, feed_id: feed_id })
 
         const attach = await create_attach({
           feed_id,
@@ -60,7 +64,8 @@ class FeedController {
               user: user_info,
               feed_liked: liked.dataValues,
               feed_comment: comment.dataValues,
-              feed_attach: attach.dataValues
+              feed_attach: attach.dataValues,
+              user_favourites: []
             })
           )
         )
@@ -69,7 +74,7 @@ class FeedController {
       ctx.body = response(1, "创建成功", result)
     } catch (err) {
       ctx.status = 500
-      ctx.body = response(1, "创建失败", `${err}`)
+      ctx.body = response(0, "创建失败", `${err}`)
     }
   }
 
@@ -128,8 +133,13 @@ class FeedController {
 
   /* 获取所有帖子 */
   async queryAllFeeds(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
+    const data = ctx.request.query
+    const limit = parseInt(data.limit as string)
+    const offset = parseInt(data.offset as string)
     try {
-      const res = await GetAllFeeds()
+      const res = await getAllFeeds(limit, offset)
+
+      // ctx.body = response(1, "获取成功", JSON.parse(res))
       ctx.body = response(1, "获取成功", toParse(JSON.parse(res)))
     } catch (err) {
       ctx.status = 500
@@ -141,6 +151,42 @@ class FeedController {
   /* 帖子点赞 */
   async likeFeed(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
     const data = ctx.request.body
+
+    try {
+      const result = await seq.transaction(async () => {
+        const oneLiked = await queryOneLiked(data.feed_id)
+
+        const parsedLiked = JSON.parse(oneLiked.liked) as string[]
+        let likedCount = oneLiked.count
+
+        const isLiked = parsedLiked.includes(data.user_id)
+
+        let newData: string
+
+        if (isLiked) {
+          newData = JSON.stringify(parsedLiked.filter(item => item !== data.user_id))
+          likedCount -= 1
+        } else {
+          newData = JSON.stringify([...parsedLiked, data.user_id])
+          likedCount += 1
+        }
+
+        await modifyFeed_like({
+          feed_id: data.feed_id,
+          liked: newData,
+          count: likedCount
+        })
+
+        console.log(newData)
+        return isLiked
+      })
+
+      ctx.body = response(1, `${result ? "取消点赞" : "点赞成功"}`, null)
+    } catch (err) {
+      ctx.status = 500
+      console.log(err)
+      ctx.body = response(0, "点赞失败", `${err}`)
+    }
 
     // try {
     //   const findRes = feedTypeRestore(await queryOneFeed(data.feed_id))
@@ -172,6 +218,27 @@ class FeedController {
   /* 删除帖子 */
   async deleteFeed(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
     const data = ctx.request.body
+
+    try {
+      await seq.transaction(async () => {
+        const oneAttach = await queryOneAttach(data.feed_id)
+        const attach = JSON.parse(oneAttach.attach) as Feed_attach[]
+
+        await modifyFeed_delete(data.feed_id)
+
+        if (attach.length > 0) {
+          for (let item of attach) {
+            await fs.rm(dir_resource + item.link)
+          }
+        }
+
+        return 1
+      })
+      ctx.body = response(1, "删除成功", null)
+    } catch (err) {
+      ctx.status = 500
+      ctx.body = response(0, "删除失败", `${err}`)
+    }
 
     // try {
     //   const findRes = feedTypeRestore(await queryOneFeed(data.feed_id))

@@ -43,4 +43,11 @@ Feed_Comment.belongsTo(Feed, {
   onDelete: "CASCADE"
 })
 
+User.hasOne(Feed_Comment, { foreignKey: "feed_userID", sourceKey: "user_id" })
+Feed_Comment.belongsTo(User, {
+  targetKey: "user_id",
+  foreignKey: "feed_userID",
+  onDelete: "CASCADE"
+})
+
 export default Feed_Comment
