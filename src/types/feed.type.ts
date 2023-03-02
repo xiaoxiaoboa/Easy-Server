@@ -27,3 +27,9 @@ export interface FeedTypeJSON extends Feed {
   user: Pick<UserType, "user_id" | "nick_name" | "avatar">
   user_favourites: InComplateFavouriteType[]
 }
+
+export interface QueryUserFeedsType {
+  user_id: string
+  limit: number
+  offset: number
+}

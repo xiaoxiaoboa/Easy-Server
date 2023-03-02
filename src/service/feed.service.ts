@@ -7,6 +7,7 @@ import { Feed_attachServiceType } from "../types/feed_attach.type.js"
 import { Feed_LikedServiceType } from "../types/feed_liked.type.js"
 import User_Favourite from "../model/user_favourite.model.js"
 import seq from "../db/seq.js"
+import { QueryUserFeedsType } from "feed.type.js"
 
 class FeedService {
   /* 创建帖子 */
@@ -54,12 +55,23 @@ class FeedService {
   }
 
   /* 查询用户帖子 */
-  async queryUserFeeds(user_id: string) {
+  async queryUserFeeds(params: QueryUserFeedsType) {
     try {
-      const res = await Feed.findAll({
-        where: { feed_userID: user_id }
+      const allFeeds = await Feed.findAll({
+        limit: params.limit,
+        offset: params.offset,
+        where: { feed_userID: params.user_id },
+        include: [
+          Feed_Liked,
+          Feed_Comment,
+          Feed_attach,
+          { model: User_Favourite, attributes: ["user_id", "createdAt"] },
+          { model: User, attributes: ["user_id", "nick_name", "avatar"] }
+        ],
+        order: [["createdAt", "DESC"]]
       })
-      return res
+
+      return JSON.stringify(allFeeds)
     } catch (err) {
       throw Error("", { cause: err })
     }

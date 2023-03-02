@@ -12,6 +12,7 @@ import feed_likedService from "../service/feed_liked.service.js"
 import feed_commentService from "../service/feed_comment.service.js"
 import { toParse } from "../util/conversionFeedType.js"
 import { Feed_attach } from "feed_attach.type.js"
+import { QueryUserFeedsType } from "feed.type.js"
 
 const {
   createFeed,
@@ -112,23 +113,15 @@ class FeedController {
 
   /* 查询用户的帖子 */
   async queryUserFeeds(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
-    const data: { user_id: string } = ctx.request.body
-    // try {
-    //   const res = await QueryUserFeeds(data.user_id)
-    //   const feed_user = await QueryUser({ user_id: data.user_id })
-
-    //   const feeds: Feed[] = res
-    //     .map(obj => ({
-    //       feed_user: feed_user,
-    //       feed: feedTypeRestore(obj.dataValues)
-    //     }))
-    //     .reverse()
-
-    //   ctx.body = response(1, "已找到用户的所有帖子", feeds)
-    // } catch (err) {
-    //   ctx.status = 500
-    //   ctx.body = response(0, "查找帖子失败", err)
-    // }
+    const data: QueryUserFeedsType = ctx.request.body
+    try {
+      const res = await queryUserFeeds(data)
+      ctx.body = response(1, "获取全部帖子成功", toParse(JSON.parse(res)))
+    } catch (err) {
+      ctx.status = 500
+      console.log(err)
+      ctx.body = `${err}`
+    }
   }
 
   /* 获取所有帖子 */
