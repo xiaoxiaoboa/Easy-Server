@@ -13,6 +13,7 @@ import feed_commentService from "../service/feed_comment.service.js"
 import { toParse } from "../util/conversionFeedType.js"
 import { Feed_attach } from "feed_attach.type.js"
 import { QueryUserFeedsType } from "feed.type.js"
+import { Feed_CommentRequestType } from "feed_comment.type.js"
 
 const {
   createFeed,
@@ -20,7 +21,8 @@ const {
   modifyFeed_like,
   queryOneFeed,
   modifyFeed_delete,
-  queryUserFeeds
+  queryUserFeeds,
+  queryFeed_comment
 } = feedService
 const { queryUser } = userService
 const { create_attach, queryOneAttach } = feed_attachService
@@ -48,14 +50,7 @@ class FeedController {
         const liked = await create_like({
           feed_id,
           feed_userID: data.feed_userID,
-          liked: JSON.stringify([]),
-          count: 0
-        })
-        const comment = await create_comment({
-          feed_id,
-          feed_userID: data.feed_userID,
-          comment: JSON.stringify([]),
-          count: 0
+          liked: JSON.stringify([])
         })
 
         return toParse(
@@ -64,14 +59,13 @@ class FeedController {
               ...feed,
               user: user_info,
               feed_liked: liked.dataValues,
-              feed_comment: comment.dataValues,
+              feed_comment: [],
               feed_attach: attach.dataValues,
               user_favourites: []
             })
           )
         )
       })
-
       ctx.body = response(1, "创建成功", result)
     } catch (err) {
       ctx.status = 500
@@ -132,8 +126,8 @@ class FeedController {
     try {
       const res = await getAllFeeds(limit, offset)
 
-      // ctx.body = response(1, "获取成功", JSON.parse(res))
       ctx.body = response(1, "获取成功", toParse(JSON.parse(res)))
+      // ctx.body = response(1, "获取成功", JSON.parse(res))
     } catch (err) {
       ctx.status = 500
       console.log(err)
@@ -150,7 +144,7 @@ class FeedController {
         const oneLiked = await queryOneLiked(data.feed_id)
 
         const parsedLiked = JSON.parse(oneLiked.liked) as string[]
-        let likedCount = oneLiked.count
+        let likedCount = oneLiked.liked.length
 
         const isLiked = parsedLiked.includes(data.user_id)
 
@@ -254,6 +248,31 @@ class FeedController {
     //   ctx.status = 500
     //   ctx.body = JSON.stringify(response(0, "删除失败", `${err}`))
     // }
+  }
+
+  /* 获取帖子评论 */
+  async queryComment(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
+    const data = ctx.request.body
+    try {
+      const res = await queryFeed_comment(data.feed_id)
+      ctx.body = response(1, "获取所有评论", res)
+    } catch (err) {
+      ctx.status = 500
+      console.log(err)
+      ctx.body = response(1, "获取评论失败", `${err}`)
+    }
+  }
+  /* 发布评论 */
+  async publishComment(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
+    const data = ctx.request.body
+    try {
+      const res = await create_comment({ ...data })
+      ctx.body = response(1, "发布评论", null)
+    } catch (err) {
+      ctx.status = 500
+      console.log(err)
+      ctx.body = response(1, "发布评论失败", `${err}`)
+    }
   }
 }
 

@@ -3,8 +3,16 @@ import Router from "koa-router"
 import feedController from "../controller/feed.controller.js"
 import { upload } from "../middleware/upload.middle.js"
 
-const { publish, feedAttachUpload, queryUserFeeds, queryAllFeeds, likeFeed, deleteFeed } =
-  feedController
+const {
+  publish,
+  feedAttachUpload,
+  queryUserFeeds,
+  queryAllFeeds,
+  likeFeed,
+  deleteFeed,
+  queryComment,
+  publishComment
+} = feedController
 
 const feedRouter = new Router()
 
@@ -15,5 +23,7 @@ feedRouter
   .get("/feeds_all", queryAllFeeds)
   .post("/feed_like", auth, likeFeed)
   .post("/feed_delete", auth, deleteFeed)
+  .post("/feed_comment", queryComment)
+  .post("/comment_create", auth, publishComment)
 
 export default feedRouter

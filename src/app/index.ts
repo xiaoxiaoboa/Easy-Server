@@ -27,7 +27,7 @@ app
   .use(compressRouter.routes())
   .use(feedRouter.routes())
   .on("error", error => {
-    console.log("server err", error)
+    // console.log("server err", error)
   })
   
   

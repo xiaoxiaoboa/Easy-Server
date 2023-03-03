@@ -9,44 +9,37 @@ const Feed_Comment = seq.define(
     feed_id: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      unique: false,
       comment: "feed ID"
     },
-    feed_userID: {
+    user_id: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: false,
-      comment: "用户ID"
+      comment: "user ID"
+    },
+    comment_id: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+      comment: "评论ID"
     },
     comment: {
-      type: DataTypes.JSON,
-      allowNull: false,
-      unique: false,
-      comment: "feed的评论"
-    },
-    count: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.STRING,
       allowNull: true,
       unique: false,
-      comment: "feed被评论的数量"
+      comment: "feed的评论"
     }
   },
-  { tableName: "feed_comment", timestamps: false }
+  { tableName: "feed_comment", updatedAt: false }
 )
 
 // Feed_Comment.sync({ force: true })
 
-Feed.hasOne(Feed_Comment, { foreignKey: "feed_id", sourceKey: "feed_id" })
+Feed.hasMany(Feed_Comment, { foreignKey: "feed_id", sourceKey: "feed_id" })
 Feed_Comment.belongsTo(Feed, {
   targetKey: "feed_id",
   foreignKey: "feed_id",
-  onDelete: "CASCADE"
-})
-
-User.hasOne(Feed_Comment, { foreignKey: "feed_userID", sourceKey: "user_id" })
-Feed_Comment.belongsTo(User, {
-  targetKey: "user_id",
-  foreignKey: "feed_userID",
   onDelete: "CASCADE"
 })
 

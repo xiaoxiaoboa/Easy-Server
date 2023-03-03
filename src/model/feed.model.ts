@@ -21,7 +21,7 @@ const Feed = seq.define(
       comment: "用户ID"
     },
     feed_text: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: true,
       unique: false,
       comment: "feed 内容"
@@ -31,7 +31,7 @@ const Feed = seq.define(
 )
 
 // Feed.sync({ force: true })
-User.hasMany(Feed,{foreignKey: 'feed_userID', sourceKey: 'user_id'})
+User.hasMany(Feed, { foreignKey: "feed_userID", sourceKey: "user_id" })
 Feed.belongsTo(User, {
   targetKey: "user_id",
   foreignKey: "feed_userID",

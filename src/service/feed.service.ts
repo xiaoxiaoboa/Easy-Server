@@ -8,6 +8,7 @@ import { Feed_LikedServiceType } from "../types/feed_liked.type.js"
 import User_Favourite from "../model/user_favourite.model.js"
 import seq from "../db/seq.js"
 import { QueryUserFeedsType } from "feed.type.js"
+import { QueryTypes } from "sequelize"
 
 class FeedService {
   /* 创建帖子 */
@@ -28,11 +29,22 @@ class FeedService {
         offset: offset,
         include: [
           Feed_Liked,
-          Feed_Comment,
           Feed_attach,
-          { model: User_Favourite, attributes: ["user_id", "createdAt"] },
+          User_Favourite,
           { model: User, attributes: ["user_id", "nick_name", "avatar"] }
         ],
+        attributes: {
+          include: [
+            /* 查询每个帖子的评论数量 */
+            [
+              seq.literal(
+                `(SELECT COUNT(*) FROM feed_comment WHERE feed_comment.feed_id = feed.feed_id)`
+              ),
+              "comment_count"
+            ]
+          ]
+        },
+
         order: [["createdAt", "DESC"]]
       })
 
@@ -98,6 +110,19 @@ class FeedService {
       const res = await Feed.destroy({
         where: { feed_id }
       })
+      return res
+    } catch (err) {
+      throw Error("", { cause: err })
+    }
+  }
+
+  /* 获取帖子评论 */
+  async queryFeed_comment(feed_id: string) {
+    try {
+      const res = seq.query(
+        `SELECT feed_comment.comment,feed_comment.comment_id,feed_comment.feed_id,feed_comment.user_id,feed_comment.createdAt,users.avatar,users.nick_name FROM feed_comment  LEFT JOIN users ON (feed_comment.user_id = users.user_id) WHERE feed_id = '${feed_id}'`,
+        { raw: true, type: QueryTypes.SELECT }
+      )
       return res
     } catch (err) {
       throw Error("", { cause: err })

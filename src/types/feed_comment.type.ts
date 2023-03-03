@@ -1,10 +1,14 @@
 export interface Feed_CommentType {
   feed_id: string
-  feed_userID: string
-  comment: string[]
-  count: number
+  user_id: string
+  comment_id: string
+  comment: string
+  createdAt: string
 }
 
-export type Feed_CommentServiceType = {
-  [key in keyof Feed_CommentType]: Feed_CommentType[key] extends number ? number : string
+export type Feed_CommentRequestType = Omit<Feed_CommentType, "createdAt">
+
+export interface Feed_CommentResponseType extends Feed_CommentRequestType {
+  nick_name: string
+  avatar:string
 }

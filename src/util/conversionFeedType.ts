@@ -10,10 +10,6 @@ export const toParse = (param: FeedTypeJSON | FeedTypeJSON[]): FeedType | FeedTy
       feed_attach: {
         ...item.feed_attach,
         attach: JSON.parse(item.feed_attach.attach)
-      },
-      feed_comment: {
-        ...item.feed_comment,
-        comment: JSON.parse(item.feed_comment.comment)
       }
     }))
   } else {
@@ -23,10 +19,6 @@ export const toParse = (param: FeedTypeJSON | FeedTypeJSON[]): FeedType | FeedTy
       feed_attach: {
         ...param.feed_attach,
         attach: JSON.parse(param.feed_attach.attach)
-      },
-      feed_comment: {
-        ...param.feed_comment,
-        comment: JSON.parse(param.feed_comment.comment)
       }
     }
   }
@@ -41,10 +33,6 @@ export const toJson = (param: FeedType | FeedType[]): FeedTypeJSON | FeedTypeJSO
       feed_attach: {
         ...item.feed_attach,
         attach: JSON.stringify(item.feed_attach.attach)
-      },
-      feed_comment: {
-        ...item.feed_comment,
-        comment: JSON.stringify(item.feed_comment.comment)
       }
     }))
   } else {
@@ -54,10 +42,6 @@ export const toJson = (param: FeedType | FeedType[]): FeedTypeJSON | FeedTypeJSO
       feed_attach: {
         ...param.feed_attach,
         attach: JSON.stringify(param.feed_attach.attach)
-      },
-      feed_comment: {
-        ...param.feed_comment,
-        comment: JSON.stringify(param.feed_comment.comment)
       }
     }
   }
