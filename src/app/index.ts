@@ -5,21 +5,30 @@ import staticServe from "koa-static"
 import usersRouter from "../router/users.route.js"
 import compressRouter from "../router/compress.route.js"
 import feedRouter from "../router/feed.route.js"
+import range from "koa-range"
 
 const app = new Koa()
 
-app.use(cors())
-app.use(staticServe("src/assets"))
-app.use(staticServe("data/resource"))
-app.use(
-  koaBody({
-    multipart: true,
-    formidable: {
-      uploadDir: `${process.cwd()}/data/upload`,
-      keepExtensions: true
-    }
+app
+  .use(cors())
+  .use(range)
+  .use(staticServe("src/assets"))
+  .use(staticServe("data/resource"))
+  .use(
+    koaBody({
+      multipart: true,
+      formidable: {
+        uploadDir: `${process.cwd()}/data/upload`,
+        keepExtensions: true
+      }
+    })
+  )
+  .use(usersRouter.routes())
+  .use(compressRouter.routes())
+  .use(feedRouter.routes())
+  .on("error", error => {
+    // console.log("server err", error)
   })
-)
-app.use(usersRouter.routes()).use(compressRouter.routes()).use(feedRouter.routes())
-
+  
+  
 export default app

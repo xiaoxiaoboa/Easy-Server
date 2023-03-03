@@ -8,17 +8,20 @@ import fs from "fs/promises"
 import sharp from "sharp"
 import { AlterationCoverType, hashedPwdType, LoginData, UserType } from "user.type.js"
 import { dir_resource, path_images, path_videos } from "../constant/path.constant.js"
-import { userTypeToJson } from "../util/conversionFeedType.js"
+import UserFavouriteService from "../service/user_favourite.service.js"
+import { User_FavouriteType } from "user_favourite.type.js"
+import seq from "../db/seq.js"
 
-const { UserRegister, UserLogin, QueryUser, UpdateUser } = userService
+const { userRegister, userLogin, queryUser, updateUser, favourite_feed } = userService
+const { createFavourite, queryFavourite, deleteFavourite, newFav } = UserFavouriteService
 
 class UsersController {
   /* 登录 */
   async login(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
     const data: LoginData = ctx.request.body
     try {
-      const existedData = await QueryUser({ email: data.email })
-      const res = await UserLogin(data, existedData)
+      const existedData = await queryUser({ email: data.email })
+      const res = await userLogin(data, existedData)
       if (res) {
         const { passwd, ...result } = existedData
         const token = jwt.sign(result, secert_key!)
@@ -38,20 +41,23 @@ class UsersController {
     const defaultValue = await getDefaultImg()
 
     try {
-      await fs.mkdir(`${dir_resource}${path_images}${data.user_id}/`, {
-        recursive: true
-      })
-      await fs.mkdir(`${dir_resource}${path_videos}${data.user_id}/`, {
-        recursive: true
-      })
+      const rel = await seq.transaction(async () => {
+        const res = await userRegister({ ...data, ...defaultValue })
+        const { passwd, ...result } = res
 
-      const res = await UserRegister({ ...data, ...defaultValue })
-      const { passwd, ...result } = res
+        await fs.mkdir(`${dir_resource}${path_images}${data.user_id}/`, {
+          recursive: true
+        })
+        await fs.mkdir(`${dir_resource}${path_videos}${data.user_id}/`, {
+          recursive: true
+        })
 
-      ctx.body = response(1, "注册成功", result)
+        return result
+      })
+      ctx.body = response(1, "注册成功", rel)
     } catch (err) {
       ctx.status = 400
-      ctx.body = response(0, "注册出错，请重试", { data, err })
+      ctx.body = response(0, "注册出错，请重试", { data, err: `${err}` })
     }
   }
 
@@ -83,10 +89,10 @@ class UsersController {
       }
 
       /* 更新数据库 */
-      await UpdateUser(requestData.user_id, path)
+      await updateUser(requestData.user_id, path)
 
       /* 返回更新后的用户信息 */
-      const userRes = await QueryUser({ user_id: requestData.user_id })
+      const userRes = await queryUser({ user_id: requestData.user_id })
 
       const { passwd, ...result } = userRes
       ctx.body = response(1, "修改成功", result)
@@ -99,9 +105,8 @@ class UsersController {
   /* 查询用户 */
   async queryUser(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
     const requestData = ctx.request.body
-    console.log(requestData)
     try {
-      const { passwd, ...result } = await QueryUser(requestData)
+      const { passwd, ...result } = await queryUser(requestData)
 
       ctx.body = response(1, "找到用户", result)
     } catch (err) {
@@ -111,8 +116,32 @@ class UsersController {
   }
 
   /* 收藏帖子 */
-  async modifyFeed_fav(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
+  async favourite(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
     const data = ctx.request.body
+
+    try {
+      const result = await seq.transaction(async () => {
+        const favs = await queryFavourite(data.user_id)
+
+        const allIds = favs.map(item => item.feed_id)
+
+        const isFav = allIds.includes(data.feed_id)
+
+        if (isFav) {
+          await deleteFavourite(data.feed_id)
+        } else {
+          await newFav(data.user_id, data.feed_id)
+        }
+
+        return isFav
+      })
+
+      ctx.body = response(1, `${result ? "取消收藏" : "收藏成功"}`, null)
+    } catch (err) {
+      ctx.status = 500
+
+      ctx.body = response(0, "收藏失败", `${err}`)
+    }
   }
 }
 

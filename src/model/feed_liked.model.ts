@@ -23,12 +23,6 @@ const Feed_Liked = seq.define(
       allowNull: false,
       unique: false,
       comment: "feed被点赞的用户"
-    },
-    count: {
-      type: DataTypes.INTEGER.UNSIGNED,
-      allowNull: true,
-      unique: false,
-      comment: "feed被点赞的数量"
     }
   },
   { tableName: "feed_liked", timestamps: false }
@@ -42,12 +36,11 @@ Feed_Liked.belongsTo(Feed, {
   foreignKey: "feed_id",
   onDelete: "CASCADE"
 })
-
-// User.hasOne(Feed_Liked, { foreignKey: "feed_userID", sourceKey: "user_id" })
-// Feed_Liked.belongsTo(User, {
-//   targetKey: "user_id",
-//   foreignKey: "feed_userID",
-//   onDelete: "CASCADE"
-// })
+User.hasOne(Feed_Liked, { foreignKey: "feed_userID", sourceKey: "user_id" })
+Feed_Liked.belongsTo(User, {
+  targetKey: "user_id",
+  foreignKey: "feed_userID",
+  onDelete: "CASCADE"
+})
 
 export default Feed_Liked

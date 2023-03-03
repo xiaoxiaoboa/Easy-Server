@@ -10,6 +10,19 @@ class Feed_CommentService {
       throw Error("", { cause: `attach${err}` })
     }
   }
+
+  /* 查找attach */
+  async queryOneAttach(feed_id: string): Promise<Feed_attachServiceType> {
+    try {
+      const res = await Feed_attach.findOne({
+        where: { feed_id }
+      })
+
+      return res?.dataValues
+    } catch (err) {
+      throw Error("", { cause: err })
+    }
+  }
 }
 
 export default new Feed_CommentService()
