@@ -1,5 +1,6 @@
 import { FeedType, FeedTypeJSON } from "feed.type.js"
 import { RegisterData, UserType, UserTypeJSON } from "user.type.js"
+import { UserFavouritedFeeds } from "user_favourite.type"
 
 /* 反序列化 */
 export const toParse = (param: FeedTypeJSON | FeedTypeJSON[]): FeedType | FeedType[] => {
@@ -22,6 +23,23 @@ export const toParse = (param: FeedTypeJSON | FeedTypeJSON[]): FeedType | FeedTy
       }
     }
   }
+}
+
+export const favToParse = (param: UserFavouritedFeeds[]) => {
+  return param.map(item => ({
+    ...item,
+    feed: {
+      ...item.feed,
+      feed_liked: {
+        ...item.feed.feed_liked,
+        liked: JSON.parse(item.feed.feed_liked.liked)
+      },
+      feed_attach: {
+        ...item.feed.feed_attach,
+        attach: JSON.parse(item.feed.feed_attach.attach)
+      }
+    }
+  }))
 }
 
 /* 序列化 */

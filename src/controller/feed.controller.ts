@@ -10,24 +10,24 @@ import seq from "../db/seq.js"
 import feed_attachService from "../service/feed_attach.service.js"
 import feed_likedService from "../service/feed_liked.service.js"
 import feed_commentService from "../service/feed_comment.service.js"
-import { toParse } from "../util/conversionFeedType.js"
+import { favToParse, toParse } from "../util/conversionFeedType.js"
 import { Feed_attach } from "feed_attach.type.js"
 import { QueryUserFeedsType } from "feed.type.js"
 import { Feed_CommentRequestType } from "feed_comment.type.js"
+import Favourite from "../service/user_favourite.service.js"
 
 const {
   createFeed,
   getAllFeeds,
   modifyFeed_like,
-  queryOneFeed,
   modifyFeed_delete,
   queryUserFeeds,
-  queryFeed_comment
+  queryFeed_comment,
+  queryFavouriteFeed
 } = feedService
-const { queryUser } = userService
 const { create_attach, queryOneAttach } = feed_attachService
 const { create_like, queryOneLiked } = feed_likedService
-const { create_comment } = feed_commentService
+const { create_comment, delete_comment } = feed_commentService
 
 class FeedController {
   /* 发布帖子 */
@@ -174,32 +174,6 @@ class FeedController {
       console.log(err)
       ctx.body = response(0, "点赞失败", `${err}`)
     }
-
-    // try {
-    //   const findRes = feedTypeRestore(await queryOneFeed(data.feed_id))
-    //   let feed_likedCount = findRes.feed_likedCount
-
-    //   const isLiked = findRes.feed_liked.includes(data.user_id)
-    //   let newData: string[] = []
-
-    //   if (isLiked) {
-    //     newData = findRes.feed_liked.filter(item => item !== data.user_id)
-    //     feed_likedCount -= 1
-    //   } else {
-    //     newData = [...findRes.feed_liked, data.user_id]
-    //     feed_likedCount += 1
-    //   }
-
-    //   const modifyRes = await modifyFeed_like(
-    //     data.feed_id,
-    //     JSON.stringify(newData),
-    //     feed_likedCount
-    //   )
-    //   ctx.body = response(1, `${isLiked ? "取消点赞" : "点赞成功"}`, modifyRes)
-    // } catch (err) {
-    //   ctx.status = 500
-    //   ctx.body = response(0, "操作失败", err)
-    // }
   }
 
   /* 删除帖子 */
@@ -226,28 +200,6 @@ class FeedController {
       ctx.status = 500
       ctx.body = response(0, "删除失败", `${err}`)
     }
-
-    // try {
-    //   const findRes = feedTypeRestore(await queryOneFeed(data.feed_id))
-    //   const attach = findRes.feed_attach
-
-    //   if (findRes.feed_userID !== data.user_id) {
-    //     throw Error("帖子和用户不匹配")
-    //   }
-
-    //   if (attach.length > 0) {
-    //     for (let item of attach) {
-    //       await fs.rm(dir_resource + item.attach_link)
-    //     }
-    //   }
-
-    //   const delRes = await modifyFeed_delete(data.feed_id)
-
-    //   ctx.body = response(1, "删除成功", delRes)
-    // } catch (err) {
-    //   ctx.status = 500
-    //   ctx.body = JSON.stringify(response(0, "删除失败", `${err}`))
-    // }
   }
 
   /* 获取帖子评论 */
@@ -259,7 +211,7 @@ class FeedController {
     } catch (err) {
       ctx.status = 500
       console.log(err)
-      ctx.body = response(1, "获取评论失败", `${err}`)
+      ctx.body = response(0, "获取评论失败", `${err}`)
     }
   }
   /* 发布评论 */
@@ -271,7 +223,33 @@ class FeedController {
     } catch (err) {
       ctx.status = 500
       console.log(err)
-      ctx.body = response(1, "发布评论失败", `${err}`)
+      ctx.body = response(0, "发布评论失败", `${err}`)
+    }
+  }
+
+  /* 获取用户收藏的帖子 */
+  async queryFav(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
+    const data = ctx.request.body
+    try {
+      const res = await queryFavouriteFeed(data.user_id, data.limit, data.offset)
+
+      ctx.body = response(1, "获取收藏的帖子", favToParse(JSON.parse(res)))
+    } catch (err) {
+      ctx.status = 500
+      console.log(err)
+      ctx.body = response(0, "获取收藏的帖子", `${err}`)
+    }
+  }
+
+  /* 删除评论 */
+  async deleteComment(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
+    const data = ctx.request.body
+    try {
+      await delete_comment(data.comment_id)
+      ctx.body = response(1, "删除评论", null)
+    } catch (err) {
+      ctx.status = 500
+      ctx.body = response(0, "删除评论", null)
     }
   }
 }
