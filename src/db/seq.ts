@@ -10,7 +10,8 @@ const seq = new Sequelize(db, root, pwd, {
     dateStrings: true,
     typeCast: true
   },
-  timezone: "+08:00"
+  timezone: "+08:00",
+  logging: false
 })
 
 seq

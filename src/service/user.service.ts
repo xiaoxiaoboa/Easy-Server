@@ -18,8 +18,9 @@ class UserService {
   }
 
   /* 查询用户 */
-  async queryUser(params: QueryUserParamsType): Promise<UserType> {
+  async queryUser(params: QueryUserParamsType, fields?: string[]): Promise<UserType> {
     const user = await User.findOne({
+      attributes: fields ? fields : { exclude: [] },
       where: {
         ...params
       }

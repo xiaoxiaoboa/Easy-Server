@@ -9,11 +9,13 @@ import sharp from "sharp"
 import { AlterationCoverType, hashedPwdType, LoginData, UserType } from "user.type.js"
 import { dir_resource, path_images, path_videos } from "../constant/path.constant.js"
 import UserFavouriteService from "../service/user_favourite.service.js"
-import { User_FavouriteType } from "user_favourite.type.js"
 import seq from "../db/seq.js"
+import { isOnline } from "../socket/notice.js"
+import FriendsService from "../service/friends.service.js"
 
-const { userRegister, userLogin, queryUser, updateUser, favourite_feed } = userService
-const { createFavourite, queryFavourite, deleteFavourite, newFav } = UserFavouriteService
+const { userRegister, userLogin, queryUser, updateUser } = userService
+const { queryFavourite, deleteFavourite, newFav } = UserFavouriteService
+const { createFriend, queryFriends } = FriendsService
 
 class UsersController {
   /* 登录 */
@@ -25,6 +27,7 @@ class UsersController {
       if (res) {
         const { passwd, ...result } = existedData
         const token = jwt.sign(result, secert_key!)
+
         ctx.body = response(1, "登录成功", { result, token })
       } else {
         ctx.body = response(0, "登录失败，密码错误", data)
@@ -104,9 +107,12 @@ class UsersController {
 
   /* 查询用户 */
   async queryUser(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
-    const requestData = ctx.request.body
+    const data = ctx.request.body
     try {
-      const { passwd, ...result } = await queryUser(requestData)
+      const { passwd, ...result } = await queryUser(
+        { user_id: data.user_id },
+        data.fields
+      )
 
       ctx.body = response(1, "找到用户", result)
     } catch (err) {
@@ -141,6 +147,18 @@ class UsersController {
       ctx.status = 500
 
       ctx.body = response(0, "收藏失败", `${err}`)
+    }
+  }
+
+  /* 查找用户好友 */
+  async getFriends(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
+    const data = ctx.request.body
+    try {
+      const res = await queryFriends(data.user_id)
+      ctx.body = response(1, "找到好友", res)
+    } catch (err) {
+      ctx.status = 500
+      ctx.body = response(0, "查找好友失败", `${err}`)
     }
   }
 }

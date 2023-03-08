@@ -13,8 +13,7 @@ import feed_commentService from "../service/feed_comment.service.js"
 import { favToParse, toParse } from "../util/conversionFeedType.js"
 import { Feed_attach } from "feed_attach.type.js"
 import { QueryUserFeedsType } from "feed.type.js"
-import { Feed_CommentRequestType } from "feed_comment.type.js"
-import Favourite from "../service/user_favourite.service.js"
+
 
 const {
   createFeed,
@@ -164,7 +163,6 @@ class FeedController {
           count: likedCount
         })
 
-        console.log(newData)
         return isLiked
       })
 
