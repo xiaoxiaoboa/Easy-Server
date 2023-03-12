@@ -8,8 +8,18 @@ import usersRouter from "../router/users.route.js"
 import compressRouter from "../router/compress.route.js"
 import feedRouter from "../router/feed.route.js"
 import range from "koa-range"
-import { privateChat, groupChat } from "../socket/chat.js"
-import { addFriends, agreeRequest, online, rejectRequest } from "../socket/notice.js"
+import {
+  privateChat,
+  groupChat,
+  connectd_chat,
+  privateChatHistory
+} from "../socket/chat.js"
+import {
+  addFriends,
+  agreeRequest,
+  connected_root,
+  rejectRequest
+} from "../socket/notice.js"
 
 const app = new Koa()
 
@@ -41,22 +51,12 @@ app
   })
 
 // io.on("connection", socket => {
-//   console.log("连接到copy")
-//   io.to(socket.id)
-//     .timeout(1000)
-//     .emit("online", "哈哈", (err: any, response: any) => {
-//       if (err) {
-//         console.log(err)
-//       } else {
-//         console.log("res:", response)
-//       }
-//     })
+//   console.log("连接到socket")
 // })
 
 /* socket启动 */
 const OnRoot = (socket: Socket) => {
-  // console.log("连接到root")
-  online(io, socket)
+  connected_root(io, socket)
   addFriends(io, socket)
   agreeRequest(io, socket)
   rejectRequest(io, socket)
@@ -64,6 +64,8 @@ const OnRoot = (socket: Socket) => {
 
 const OnChat = (socket: Socket) => {
   // console.log("有程序连接进chat了")
+  connectd_chat(io, socket)
+  privateChatHistory(io, socket)
   privateChat(io, socket)
 
   /* 退出 */

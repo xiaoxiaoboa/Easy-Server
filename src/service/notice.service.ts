@@ -13,7 +13,7 @@ class NoticeController {
     }
   }
 
-  /* 查询 */
+  /* 查询用户全部 */
   async queryNotice(user_id: string) {
     try {
       const res = await Notice.findAll({
@@ -26,13 +26,28 @@ class NoticeController {
       throw Error("", { cause: err })
     }
   }
+
+  /* 查询用户某个类型的notice */
+  async querySthNotic(user_id: string, type: string) {
+    try {
+      const res = await Notice.findAll({
+        where: {
+          [Op.and]: [{ user_id: user_id }, { type: type }, { done: 0 }]
+        },
+        attributes: ["desc"]
+      })
+      return res
+    } catch (err) {
+      throw Error("", { cause: err })
+    }
+  }
+
   /* 更新 */
   async updateNotice(notice_id: string, done: boolean, type?: string) {
     try {
       const res = await Notice.update({ done, type }, { where: { notice_id } })
       return res
     } catch (err) {
-      
       throw Error("", { cause: err })
     }
   }

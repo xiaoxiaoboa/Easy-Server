@@ -22,7 +22,7 @@ const Friends = seq.define(
 )
 export default Friends
 
-Friends.sync({ force: true })
+// Friends.sync({ force: true })
 
 User.hasMany(Friends, { foreignKey: "user_id", sourceKey: "user_id" })
 Friends.belongsTo(User, {

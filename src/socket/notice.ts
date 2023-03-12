@@ -12,7 +12,7 @@ type Props = [Server, Socket]
 export const socketIdMap = new Map()
 
 /* 上线后存储每个客户端的socketid */
-export const online = (...props: Props) => {
+export const connected_root = (...props: Props) => {
   const [io, socket] = props
 
   socket.on("connected", async (socket_id: string, user_id: string) => {
@@ -45,6 +45,10 @@ export const addFriends = (...props: Props) => {
     const userSocketId = socketIdMap.get(user_id)
 
     try {
+      const noticeRes = await NoticeService.querySthNotic(user_id, "0")
+      const isExist = noticeRes.some(item => item.dataValues.desc === self_id)
+      if (isExist) return
+
       const friendRes = await newNotice({
         notice_id: nanoid(10),
         user_id,
@@ -82,9 +86,8 @@ export const agreeRequest = (...props: Props) => {
           await FriendsService.createFriend(user_id, friend_id)
           await FriendsService.createFriend(friend_id, user_id)
           await NoticeService.updateNotice(notice_id, true, "01")
-
-          callback("success")
         })
+        callback("success")
       } catch (err) {
         console.log("好友信息存储失败")
       }
