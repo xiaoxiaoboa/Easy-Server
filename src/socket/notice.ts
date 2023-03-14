@@ -6,6 +6,8 @@ import UserService from "../service/user.service.js"
 import FriendsService from "../service/friends.service.js"
 import { nanoid } from "nanoid"
 import seq from "../db/seq.js"
+import group_numbersService from "../service/group_numbers.service.js"
+import { joinRoom } from "./group.js"
 
 type Props = [Server, Socket]
 
@@ -16,31 +18,16 @@ export const connected_root = (...props: Props) => {
   const [io, socket] = props
 
   socket.on("connected", async (socket_id: string, user_id: string) => {
+    await joinRoom(user_id, socket)
     socketIdMap.set(user_id, socket_id)
     handleNotice(socket, user_id)
   })
 }
 
-export const isOnline = (socket_id: string): Promise<boolean> => {
-  return new Promise((resolve, reject) => {
-    if (!socket_id) resolve(false)
-
-    io.to(socket_id).emit("online", "你在么", (err: any, res: any) => {
-      if (err) {
-        console.log(0)
-        resolve(false)
-      } else {
-        console.log(1, res)
-        resolve(true)
-      }
-    })
-  })
-}
-
+/* 添加好友请求 */
 export const addFriends = (...props: Props) => {
   const [io, socket] = props
 
-  /* 添加好友请求 */
   socket.on("friendsRequest", async (self_id: string, user_id: string) => {
     const userSocketId = socketIdMap.get(user_id)
 

@@ -1,10 +1,11 @@
 import { Feed_LikedServiceType } from "feed_liked.type.js"
+import { Transaction } from "sequelize"
 import Feed_Liked from "../model/feed_liked.model.js"
 
 class Feed_LikedService {
-  async create_like(params: Feed_LikedServiceType) {
+  async create_like(params: Feed_LikedServiceType, t: Transaction) {
     try {
-      const res = await Feed_Liked.create({ ...params })
+      const res = await Feed_Liked.create({ ...params }, { transaction: t })
       return res
     } catch (err) {
       throw Error("", { cause: err })

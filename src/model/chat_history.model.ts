@@ -2,8 +2,8 @@ import { DataTypes } from "sequelize"
 import seq from "../db/seq.js"
 import User from "./user.model.js"
 
-const PrivateChat = seq.define(
-  "chat_private",
+const ChatHistory = seq.define(
+  "chat_history",
   {
     user_id: {
       type: DataTypes.STRING,
@@ -24,14 +24,14 @@ const PrivateChat = seq.define(
       comment: "消息文本"
     }
   },
-  { tableName: "chat_private", updatedAt: false }
+  { tableName: "chat_history", updatedAt: false }
 )
-export default PrivateChat
+export default ChatHistory
 
-// PrivateChat.sync({force:true})
+// ChatHistory.sync({ force: true })
 
-User.hasMany(PrivateChat, {foreignKey: "user_id",sourceKey:"user_id"})
-PrivateChat.belongsTo(User, {
+User.hasMany(ChatHistory, { foreignKey: "user_id", sourceKey: "user_id" })
+ChatHistory.belongsTo(User, {
   targetKey: "user_id",
   foreignKey: "user_id",
   onDelete: "CASCADE"

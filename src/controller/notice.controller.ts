@@ -5,7 +5,6 @@ import { NoticeType } from "notice.type.js"
 import { Model } from "sequelize"
 import { Socket } from "socket.io"
 import userService from "../service/user.service.js"
-import { isOnline } from "../socket/notice.js"
 
 const { queryNotice, createNotice, updateNotice } = NoticeService
 

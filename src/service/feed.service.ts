@@ -8,13 +8,13 @@ import { Feed_LikedServiceType } from "../types/feed_liked.type.js"
 import User_Favourite from "../model/user_favourite.model.js"
 import seq from "../db/seq.js"
 import { QueryUserFeedsType } from "feed.type.js"
-import { QueryTypes } from "sequelize"
+import { QueryTypes, Transaction } from "sequelize"
 
 class FeedService {
   /* 创建帖子 */
-  async createFeed(data: any) {
+  async createFeed(data: any, t: Transaction) {
     try {
-      const newFeed = await Feed.create({ ...data })
+      const newFeed = await Feed.create({ ...data }, { transaction: t })
       return newFeed.dataValues
     } catch (err) {
       throw Error("", { cause: err })

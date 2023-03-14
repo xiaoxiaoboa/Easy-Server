@@ -1,10 +1,11 @@
+import { Transaction } from "sequelize"
 import Feed_attach from "../model/feed_attach.model.js"
 import { Feed_attachServiceType } from "../types/feed_attach.type.js"
 
 class Feed_CommentService {
-  async create_attach(params: Feed_attachServiceType) {
+  async create_attach(params: Feed_attachServiceType, t: Transaction) {
     try {
-      const res = await Feed_attach.create({ ...params })
+      const res = await Feed_attach.create({ ...params }, { transaction: t })
       return res
     } catch (err) {
       throw Error("", { cause: `attach${err}` })

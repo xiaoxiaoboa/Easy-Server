@@ -7,19 +7,16 @@ import staticServe from "koa-static"
 import usersRouter from "../router/users.route.js"
 import compressRouter from "../router/compress.route.js"
 import feedRouter from "../router/feed.route.js"
+import groupRouter from "../router/chat_group.route.js"
 import range from "koa-range"
-import {
-  privateChat,
-  groupChat,
-  connectd_chat,
-  privateChatHistory
-} from "../socket/chat.js"
+import { privateChat, connectd_chat, privateChatHistory } from "../socket/chat.js"
 import {
   addFriends,
   agreeRequest,
   connected_root,
   rejectRequest
 } from "../socket/notice.js"
+import { groupChat, groupChatHistory } from "../socket/group.js"
 
 const app = new Koa()
 
@@ -46,13 +43,10 @@ app
   .use(usersRouter.routes())
   .use(compressRouter.routes())
   .use(feedRouter.routes())
+  .use(groupRouter.routes())
   .on("error", error => {
     // console.log("server err", error)
   })
-
-// io.on("connection", socket => {
-//   console.log("连接到socket")
-// })
 
 /* socket启动 */
 const OnRoot = (socket: Socket) => {
@@ -76,9 +70,11 @@ const OnGroupChat = (socket: Socket) => {
   // console.log("有程序连接进group了")
 
   groupChat(io, socket)
+  groupChatHistory(io, socket)
 }
 
 io.of("/", OnRoot)
 io.of("/chat", OnChat)
 io.of("/group_chat", OnGroupChat)
+
 export default server

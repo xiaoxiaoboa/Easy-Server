@@ -10,7 +10,6 @@ import { AlterationCoverType, hashedPwdType, LoginData, UserType } from "user.ty
 import { dir_resource, path_images, path_videos } from "../constant/path.constant.js"
 import UserFavouriteService from "../service/user_favourite.service.js"
 import seq from "../db/seq.js"
-import { isOnline } from "../socket/notice.js"
 import FriendsService from "../service/friends.service.js"
 
 const { userRegister, userLogin, queryUser, updateUser } = userService

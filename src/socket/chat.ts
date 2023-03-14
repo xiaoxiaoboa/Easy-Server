@@ -1,6 +1,7 @@
-import { PrivateMessageType } from "chat.type.js"
+import { MessageType } from "chat.type.js"
 import { Server, Socket } from "socket.io"
-import PrivateChatService from "../service/chat_private.service.js"
+import ChatHistoryService from "../service/chat_history.service.js"
+import { socketIdMap as notice_socketIds } from "./notice.js"
 
 type Props = [Server, Socket]
 
@@ -19,7 +20,7 @@ export function privateChatHistory(...props: Props) {
   const [io, socket] = props
   socket.on("private_chat_history", async (user_id: string, to_id: string, callback) => {
     try {
-      const res = await PrivateChatService.queryPrivateMessage(user_id, to_id)
+      const res = await ChatHistoryService.queryPrivateMessages(user_id, to_id)
       callback(res)
     } catch (err) {
       console.log(err)
@@ -31,30 +32,21 @@ export function privateChatHistory(...props: Props) {
 export function privateChat(...props: Props) {
   const [io, socket] = props
 
-  socket.on("private_chat", async (user_id: string, params: PrivateMessageType) => {
-    const toSocket_id = socketIdMap.get(user_id)
+  /* 监听私聊消息 */
+  socket.on("private_chat", async (params: MessageType) => {
+    const toSocket_id = socketIdMap.get(params.to_id)
     try {
-      const { createdAt, ...result } = params
-      await PrivateChatService.newPrivateMessage(result)
+      const { createdAt, user, ...result } = params
+      /* 存储 */
+      await ChatHistoryService.newMessage(result)
+
+      /* 转发给对方 */
       socket.to(toSocket_id).emit("private_message", params)
+      
+      /* 发送新消息通知 */
+      io.of("/").to(notice_socketIds.get(params.to_id)).emit("new_message", params)
     } catch (err) {
       console.log(err)
     }
-  })
-}
-
-/* 群聊 */
-export const groupChat = (...props: Props) => {
-  const [io, socket] = props
-
-  socket.join("room1")
-
-  socket.on("groupMessages", (room_id: string, data: any) => {
-    console.log(room_id, data)
-    socket.to(room_id).emit("groupMessages", data)
-  })
-
-  socket.on("disconnect", () => {
-    console.log("断开连接了")
   })
 }

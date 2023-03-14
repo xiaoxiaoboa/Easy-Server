@@ -13,7 +13,7 @@ import feed_commentService from "../service/feed_comment.service.js"
 import { favToParse, toParse } from "../util/conversionFeedType.js"
 import { Feed_attach } from "feed_attach.type.js"
 import { QueryUserFeedsType } from "feed.type.js"
-
+import { upload, feedAttachUpload } from "../util/upload.js"
 
 const {
   createFeed,
@@ -32,76 +32,56 @@ class FeedController {
   /* 发布帖子 */
   async publish(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
     const data = ctx.request.body
+    const files = ctx.request.files
     const user_info = ctx.state.user
+
+    const feedUser = JSON.parse(data.data)
 
     const feed_id = nanoid(12)
     try {
       /* 使用事务 */
       const result = await seq.transaction(async t => {
-        const feed = await createFeed({ ...data, feed_id: feed_id })
+        /* 把移动后的文件组成可存入数据库的格式 */
+        const filesSaveData = await feedAttachUpload(files!, user_info.user_id)
+        /* 把帖子数据插入数据库 */
+        const feed = await createFeed({ ...feedUser, feed_id: feed_id }, t)
 
-        const attach = await create_attach({
-          feed_id,
-          feed_userID: data.feed_userID,
-          count: 0,
-          attach: JSON.stringify(data.feed_attach)
-        })
-        const liked = await create_like({
-          feed_id,
-          feed_userID: data.feed_userID,
-          liked: JSON.stringify([])
-        })
-
-        return toParse(
-          JSON.parse(
-            JSON.stringify({
-              ...feed,
-              user: user_info,
-              feed_liked: liked.dataValues,
-              feed_comment: [],
-              feed_attach: attach.dataValues,
-              user_favourites: []
-            })
-          )
+        /* 帖子的图片或视频插入数据库 */
+        const attach = await create_attach(
+          {
+            feed_id,
+            feed_userID: feedUser.feed_userID,
+            count: 0,
+            attach: JSON.stringify(filesSaveData)
+          },
+          t
         )
+        /* 初始化帖子的喜欢 */
+        const liked = await create_like(
+          {
+            feed_id,
+            feed_userID: feedUser.feed_userID,
+            liked: JSON.stringify([])
+          },
+          t
+        )
+
+        return toParse({
+          ...feed,
+          user: user_info,
+          feed_liked: liked.dataValues,
+          feed_comment: [],
+          feed_attach: attach.dataValues,
+          user_favourites: []
+        })
       })
+      /* 移动上传的文件 */
+      await upload(files!, user_info.user_id)
       ctx.body = response(1, "创建成功", result)
     } catch (err) {
       ctx.status = 500
       ctx.body = response(0, "创建失败", `${err}`)
     }
-  }
-
-  /* 帖子图片和视频上传 */
-  async feedAttachUpload(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
-    const files: File[] = ctx.request.body
-    const { user_id } = ctx.state.user
-    let filesData: any[] = []
-
-    files.map(file => {
-      const fileType = file.mimetype?.split("/")[0]
-      switch (fileType) {
-        case "image":
-          filesData.push({
-            id: nanoid(10),
-            type: fileType,
-            link: `${path_images}${user_id}/${file.newFilename}`
-          })
-          break
-        case "video":
-          filesData.push({
-            id: nanoid(10),
-            type: fileType,
-            link: `${path_videos}${user_id}/${file.newFilename}`
-          })
-          break
-        default:
-          ctx.body = response(0, "上传失败", files)
-          return
-      }
-    })
-
-    ctx.body = response(1, "上传成功", filesData)
   }
 
   /* 查询用户的帖子 */
@@ -126,10 +106,8 @@ class FeedController {
       const res = await getAllFeeds(limit, offset)
 
       ctx.body = response(1, "获取成功", toParse(JSON.parse(res)))
-      // ctx.body = response(1, "获取成功", JSON.parse(res))
     } catch (err) {
       ctx.status = 500
-      console.log(err)
       ctx.body = response(0, "获取失败", `${err}`)
     }
   }
