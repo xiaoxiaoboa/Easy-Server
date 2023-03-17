@@ -8,6 +8,7 @@ import fs from "fs"
 import { File } from "../types/upload.type.js"
 import { nanoid } from "nanoid"
 import formidable from "formidable"
+import { Feed_attach } from "feed_attach.type.js"
 
 /* 移动到用户目录 */
 export const upload = async (data: formidable.Files, user_id: string): Promise<any> => {
@@ -45,11 +46,14 @@ export const upload = async (data: formidable.Files, user_id: string): Promise<a
 }
 
 /* 把帖子图片和视频数据组成可存入数据库格式 */
-export const feedAttachUpload = (data: formidable.Files, user_id: string) => {
+export const attachUpload = (
+  data: formidable.Files,
+  user_id: string
+): Promise<Feed_attach[]> => {
   return new Promise((resolve, reject) => {
     const files = Object.values(data)
 
-    let filesData: any[] = []
+    let filesData: Feed_attach[] = []
 
     files.map(file => {
       const fileType = (file as File).mimetype?.split("/")[0]

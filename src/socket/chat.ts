@@ -16,6 +16,7 @@ export const connectd_chat = (...props: Props) => {
   })
 }
 
+/* 取回聊天记录 */
 export function privateChatHistory(...props: Props) {
   const [io, socket] = props
   socket.on("private_chat_history", async (user_id: string, to_id: string, callback) => {
@@ -42,6 +43,8 @@ export function privateChat(...props: Props) {
 
       /* 转发给对方 */
       socket.to(toSocket_id).emit("private_message", params)
+
+      
       
       /* 发送新消息通知 */
       io.of("/").to(notice_socketIds.get(params.to_id)).emit("new_message", params)

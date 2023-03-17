@@ -7,13 +7,13 @@ import userService from "../service/user.service.js"
 import { path_images, path_videos, dir_resource } from "../constant/path.constant.js"
 import fs from "fs/promises"
 import seq from "../db/seq.js"
-import feed_attachService from "../service/feed_attach.service.js"
+import Feed_AttachService from "../service/feed_attach.service.js"
 import feed_likedService from "../service/feed_liked.service.js"
 import feed_commentService from "../service/feed_comment.service.js"
 import { favToParse, toParse } from "../util/conversionFeedType.js"
 import { Feed_attach } from "feed_attach.type.js"
 import { QueryUserFeedsType } from "feed.type.js"
-import { upload, feedAttachUpload } from "../util/upload.js"
+import { upload, attachUpload } from "../util/upload.js"
 
 const {
   createFeed,
@@ -24,7 +24,7 @@ const {
   queryFeed_comment,
   queryFavouriteFeed
 } = feedService
-const { create_attach, queryOneAttach } = feed_attachService
+const { create_attach, queryOneAttach, queryAllAttach } = Feed_AttachService
 const { create_like, queryOneLiked } = feed_likedService
 const { create_comment, delete_comment } = feed_commentService
 
@@ -42,7 +42,7 @@ class FeedController {
       /* 使用事务 */
       const result = await seq.transaction(async t => {
         /* 把移动后的文件组成可存入数据库的格式 */
-        const filesSaveData = await feedAttachUpload(files!, user_info.user_id)
+        const filesSaveData = await attachUpload(files!, user_info.user_id)
         /* 把帖子数据插入数据库 */
         const feed = await createFeed({ ...feedUser, feed_id: feed_id }, t)
 
@@ -226,6 +226,18 @@ class FeedController {
     } catch (err) {
       ctx.status = 500
       ctx.body = response(0, "删除评论", null)
+    }
+  }
+
+  /* 获取用户所有帖子的图片和视频 */
+  async querAttaches(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
+    const data = ctx.request.body
+    try {
+      const res = await queryAllAttach(data.user_id)
+      ctx.body = response(1, "图片和视频", res)
+    } catch (err) {
+      ctx.status = 500
+      ctx.body = response(0, "获取失败", `${err}`)
     }
   }
 }

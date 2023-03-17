@@ -22,6 +22,18 @@ const ChatHistory = seq.define(
       allowNull: false,
       unique: false,
       comment: "消息文本"
+    },
+    msg_type: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: false,
+      comment: "消息类型"
+    },
+    status: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      unique: false,
+      comment: "消息状态"
     }
   },
   { tableName: "chat_history", updatedAt: false }

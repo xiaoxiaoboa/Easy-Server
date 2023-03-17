@@ -5,10 +5,11 @@ import GroupNumbersService from "../service/group_numbers.service.js"
 import { File } from "upload.type.js"
 import { dir_resource, path_images } from "../constant/path.constant.js"
 import seq from "../db/seq.js"
-import { upload } from "../util/upload.js"
+import { attachUpload, upload } from "../util/upload.js"
 import fs from "fs/promises"
 
 class ChatGroupController {
+  /* 创建 */
   async create(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
     const data = ctx.request.body
     const files = ctx.request.files
@@ -30,12 +31,8 @@ class ChatGroupController {
     try {
       const result = await seq.transaction(async t => {
         const group = await ChatGroupService.newChatGroup(newGroupData, t)
-        const numbers = await GroupNumbersService.newGroupNumber(
-          newGroupData.group_id,
-          numbersData,
-          t
-        )
-        return { group, numbers }
+        await GroupNumbersService.newGroupNumber(newGroupData.group_id, numbersData, t)
+        return group
       })
       await fs.mkdir(`${dir_resource}${path_images}${newGroupData.group_id}/`, {
         recursive: true
@@ -45,6 +42,26 @@ class ChatGroupController {
     } catch (err) {
       ctx.status = 500
       ctx.body = response(0, "创建失败", `${err}`)
+    }
+  }
+
+  /* 更换头像 */
+  async updateAvatar(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
+    const files = ctx.request.files
+    const data = ctx.request.body
+
+    try {
+      const newData = await attachUpload(files!, JSON.parse(data.group_id))
+      if (newData[0]) {
+        await ChatGroupService.update(JSON.parse(data.group_id), {
+          group_avatar: newData[0].link
+        })
+        await upload(files!, JSON.parse(data.group_id))
+        ctx.body = response(1, "修改头像", newData[0].link)
+      }
+    } catch (err) {
+      ctx.status = 500
+      ctx.body = response(0, "修改失败", `${err}`)
     }
   }
 }

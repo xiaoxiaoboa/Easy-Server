@@ -32,6 +32,19 @@ class GroupNumbersService {
       throw Error("", { cause: err })
     }
   }
+
+  /* 查询群组的成员 */
+  async queryMumbers(group_id: string) {
+    try {
+      const res = seq.query(
+        `(SELECT u.avatar,u.nick_name,u.user_id  FROM users as u  LEFT JOIN group_numbers as gn ON (gn.user_id = u.user_id) WHERE gn.group_id = '${group_id}')`,
+        { raw: true, type: QueryTypes.SELECT }
+      )
+      return res
+    } catch (err) {
+      throw Error("", { cause: err })
+    }
+  }
 }
 
 export default new GroupNumbersService()

@@ -16,7 +16,12 @@ import {
   connected_root,
   rejectRequest
 } from "../socket/notice.js"
-import { groupChat, groupChatHistory } from "../socket/group.js"
+import {
+  groupChat,
+  groupChatHistory,
+  groupMumbers,
+  groupUpdate
+} from "../socket/group.js"
 
 const app = new Koa()
 
@@ -71,6 +76,8 @@ const OnGroupChat = (socket: Socket) => {
 
   groupChat(io, socket)
   groupChatHistory(io, socket)
+  groupMumbers(io, socket)
+  groupUpdate(io, socket)
 }
 
 io.of("/", OnRoot)
