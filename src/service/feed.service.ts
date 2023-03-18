@@ -3,8 +3,8 @@ import Feed from "../model/feed.model.js"
 import Feed_Liked from "../model/feed_liked.model.js"
 import Feed_Comment from "../model/feed_comment.model.js"
 import User from "../model/user.model.js"
-import { Feed_attachServiceType } from "../types/feed_attach.type.js"
-import { Feed_LikedServiceType } from "../types/feed_liked.type.js"
+import {} from "../types/feed_attach.type.js"
+import { Feed_LikedType } from "../types/feed_liked.type.js"
 import User_Favourite from "../model/user_favourite.model.js"
 import seq from "../db/seq.js"
 import { QueryUserFeedsType } from "feed.type.js"
@@ -28,8 +28,8 @@ class FeedService {
         limit,
         offset,
         include: [
-          Feed_Liked,
           Feed_attach,
+          Feed_Liked,
           User_Favourite,
           { model: User, attributes: ["user_id", "nick_name", "avatar"] }
         ],
@@ -44,12 +44,12 @@ class FeedService {
             ]
           ]
         },
-
         order: [["createdAt", "DESC"]]
       })
 
-      return JSON.stringify(allFeeds)
+      return allFeeds
     } catch (err) {
+      console.log(err)
       throw Error("", { cause: err })
     }
   }
@@ -93,14 +93,14 @@ class FeedService {
         order: [["createdAt", "DESC"]]
       })
 
-      return JSON.stringify(allFeeds)
+      return allFeeds
     } catch (err) {
       throw Error("", { cause: err })
     }
   }
 
   /* 点赞 */
-  async modifyFeed_like(params: { feed_id: string; liked: string; count: number }) {
+  async modifyFeed_like(params: Feed_LikedType) {
     try {
       const result = await Feed_Liked.update(
         { ...params },
@@ -169,7 +169,7 @@ class FeedService {
           }
         ]
       })
-      return JSON.stringify(res)
+      return res
     } catch (err) {
       throw Error("", { cause: err })
     }

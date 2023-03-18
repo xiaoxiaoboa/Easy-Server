@@ -1,7 +1,7 @@
 import { InComplateFavouriteType } from "user_favourite.type.js"
-import { Feed_attachType, Feed_attachServiceType } from "./feed_attach.type.js"
+import { Feed_attachType } from "./feed_attach.type.js"
 import { Feed_CommentType } from "./feed_comment.type.js"
-import { Feed_LikedServiceType, Feed_LikedType } from "./feed_liked.type.js"
+import { Feed_LikedType } from "./feed_liked.type.js"
 import { UserType } from "./user.type"
 
 export interface Feed {
@@ -16,14 +16,6 @@ export interface FeedType extends Feed {
   comment_count: number
   feed_liked: Feed_LikedType
   feed_attach: Feed_attachType
-  user: Pick<UserType, "user_id" | "nick_name" | "avatar">
-  user_favourites: InComplateFavouriteType[]
-}
-
-export interface FeedTypeJSON extends Feed {
-  comment_count: number
-  feed_liked: Feed_LikedServiceType
-  feed_attach: Feed_attachServiceType
   user: Pick<UserType, "user_id" | "nick_name" | "avatar">
   user_favourites: InComplateFavouriteType[]
 }

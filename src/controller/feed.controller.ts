@@ -25,7 +25,7 @@ const {
   queryFavouriteFeed
 } = feedService
 const { create_attach, queryOneAttach, queryAllAttach } = Feed_AttachService
-const { create_like, queryOneLiked } = feed_likedService
+const { create_like, queryOneLiked, deleteLiked } = feed_likedService
 const { create_comment, delete_comment } = feed_commentService
 
 class FeedController {
@@ -47,36 +47,25 @@ class FeedController {
         const feed = await createFeed({ ...feedUser, feed_id: feed_id }, t)
 
         /* 帖子的图片或视频插入数据库 */
-        const attach = await create_attach(
-          {
-            feed_id,
-            feed_userID: feedUser.feed_userID,
-            count: 0,
-            attach: JSON.stringify(filesSaveData)
-          },
-          t
-        )
-        /* 初始化帖子的喜欢 */
-        const liked = await create_like(
-          {
-            feed_id,
-            feed_userID: feedUser.feed_userID,
-            liked: JSON.stringify([])
-          },
-          t
-        )
+        const attachesData = filesSaveData.map(i => ({
+          feed_id,
+          feed_userID: feedUser.feed_userID,
+          attach_id: i.id,
+          attach_type: i.type,
+          attach_link: i.link
+        }))
+        const feed_attaches = await create_attach(attachesData, t)
 
-        return toParse({
+        /* 移动上传的文件 */
+        await upload(files!, user_info.user_id)
+        return {
           ...feed,
-          user: user_info,
-          feed_liked: liked.dataValues,
-          feed_comment: [],
-          feed_attach: attach.dataValues,
+          feed_attaches,
+          comment_count: 0,
+          feed_likeds: [],
           user_favourites: []
-        })
+        }
       })
-      /* 移动上传的文件 */
-      await upload(files!, user_info.user_id)
       ctx.body = response(1, "创建成功", result)
     } catch (err) {
       ctx.status = 500
@@ -89,7 +78,7 @@ class FeedController {
     const data: QueryUserFeedsType = ctx.request.body
     try {
       const res = await queryUserFeeds(data)
-      ctx.body = response(1, "获取全部帖子成功", toParse(JSON.parse(res)))
+      ctx.body = response(1, "获取全部帖子成功", res)
     } catch (err) {
       ctx.status = 500
       console.log(err)
@@ -105,10 +94,10 @@ class FeedController {
     try {
       const res = await getAllFeeds(limit, offset)
 
-      ctx.body = response(1, "获取成功", toParse(JSON.parse(res)))
+      ctx.body = response(1, "获取成功", res)
     } catch (err) {
       ctx.status = 500
-      ctx.body = response(0, "获取失败", `${err}`)
+      ctx.body = response(0, "获取帖子失败", `${err}`)
     }
   }
 
@@ -117,34 +106,17 @@ class FeedController {
     const data = ctx.request.body
 
     try {
-      const result = await seq.transaction(async () => {
-        const oneLiked = await queryOneLiked(data.feed_id)
+      const allLiked = await queryOneLiked(data.feed_id)
 
-        const parsedLiked = JSON.parse(oneLiked.liked) as string[]
-        let likedCount = oneLiked.liked.length
+      const isLiked = allLiked.find(i => i.dataValues.liked === data.user_id)
 
-        const isLiked = parsedLiked.includes(data.user_id)
-
-        let newData: string
-
-        if (isLiked) {
-          newData = JSON.stringify(parsedLiked.filter(item => item !== data.user_id))
-          likedCount -= 1
-        } else {
-          newData = JSON.stringify([...parsedLiked, data.user_id])
-          likedCount += 1
-        }
-
-        await modifyFeed_like({
-          feed_id: data.feed_id,
-          liked: newData,
-          count: likedCount
-        })
-
-        return isLiked
-      })
-
-      ctx.body = response(1, `${result ? "取消点赞" : "点赞成功"}`, null)
+      if (isLiked) {
+        deleteLiked(data.feed_id, data.user_id)
+        ctx.body = response(1, "取消点赞成功", null)
+      } else {
+        create_like(data.feed_id, data.user_id)
+        ctx.body = response(1, "点赞成功", null)
+      }
     } catch (err) {
       ctx.status = 500
       console.log(err)
@@ -158,14 +130,13 @@ class FeedController {
 
     try {
       await seq.transaction(async () => {
-        const oneAttach = await queryOneAttach(data.feed_id)
-        const attach = JSON.parse(oneAttach.attach) as Feed_attach[]
+        const attach = await queryOneAttach(data.feed_id)
 
         await modifyFeed_delete(data.feed_id)
 
         if (attach.length > 0) {
           for (let item of attach) {
-            await fs.rm(dir_resource + item.link)
+            await fs.rm(dir_resource + item.dataValues.attach_link)
           }
         }
 
@@ -209,7 +180,8 @@ class FeedController {
     try {
       const res = await queryFavouriteFeed(data.user_id, data.limit, data.offset)
 
-      ctx.body = response(1, "获取收藏的帖子", favToParse(JSON.parse(res)))
+      console.log(res)
+      ctx.body = response(1, "获取收藏的帖子", res)
     } catch (err) {
       ctx.status = 500
       console.log(err)

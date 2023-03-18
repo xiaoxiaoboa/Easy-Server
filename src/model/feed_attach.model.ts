@@ -9,7 +9,7 @@ const Feed_attach = seq.define(
     feed_id: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      unique: false,
       comment: "feed ID"
     },
     feed_userID: {
@@ -18,11 +18,23 @@ const Feed_attach = seq.define(
       unique: false,
       comment: "用户ID"
     },
-    attach: {
-      type: DataTypes.JSON,
-      allowNull: true,
-      unique: false,
+    attach_id: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
       comment: "feed包含的图片或视频地址"
+    },
+    attach_type: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: false,
+      comment: "attach类型"
+    },
+    attach_link: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: false,
+      comment: "attach链接"
     }
   },
   { tableName: "feed_attach", timestamps: false }
@@ -30,14 +42,17 @@ const Feed_attach = seq.define(
 
 // Feed_attach.sync({ force: true })
 
-Feed.hasOne(Feed_attach, { foreignKey: "feed_id", sourceKey: "feed_id" })
+Feed.hasMany(Feed_attach, {
+  foreignKey: "feed_id",
+  sourceKey: "feed_id"
+})
 Feed_attach.belongsTo(Feed, {
   targetKey: "feed_id",
   foreignKey: "feed_id",
-  onDelete: "CASCADE"
+  onDelete: "CASCADE",
 })
 
-User.hasOne(Feed_attach, { foreignKey: "feed_userID", sourceKey: "user_id" })
+User.hasMany(Feed_attach, { foreignKey: "feed_userID", sourceKey: "user_id" })
 Feed_attach.belongsTo(User, {
   targetKey: "user_id",
   foreignKey: "feed_userID",
