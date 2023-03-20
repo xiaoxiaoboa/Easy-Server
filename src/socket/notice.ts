@@ -1,13 +1,14 @@
 import { io } from "../app/index.js"
 import { Server, Socket } from "socket.io"
 import NoticeService from "../service/notice.service.js"
-import { newNotice, handleNotice } from "../controller/notice.controller.js"
+import { handleNotice } from "../controller/notice.controller.js"
 import UserService from "../service/user.service.js"
 import FriendsService from "../service/friends.service.js"
 import { nanoid } from "nanoid"
 import seq from "../db/seq.js"
-import group_numbersService from "../service/group_numbers.service.js"
+import GroupNumbersService from "../service/group_numbers.service.js"
 import { joinRoom } from "./group.js"
+import ChatHistoryService from "../service/chat_history.service.js"
 
 type Props = [Server, Socket]
 
@@ -20,7 +21,34 @@ export const connected_root = (...props: Props) => {
   socket.on("connected", async (socket_id: string, user_id: string) => {
     await joinRoom(user_id, socket)
     socketIdMap.set(user_id, socket_id)
-    handleNotice(socket, user_id)
+  })
+
+  /* 查询用户下线后未读的消息 */
+  socket.on("unreadMessages", async (to_id: string[], user_id: string, callback) => {
+    const user = await UserService.queryUser({ user_id })
+    const offline = user.offline
+    // const groups = await GroupNumbersService.queryJoined(user_id)
+    // const groupIds = groups.map(i => i.group_id)
+
+    const ids = to_id.map(i => `'${i}'`)
+    const res = await ChatHistoryService.queryUserAll(ids, offline)
+
+    callback(res)
+  })
+}
+/* 下线 */
+export const disconnect = (...props: Props) => {
+  const [io, socket] = props
+
+  socket.on("disconnect", async () => {
+    /* 下线时存储时间 */
+    socketIdMap.forEach((val, key) => {
+      if (val === socket.id) {
+        UserService.updateUser(key, { offline: new Date() })
+      }
+    })
+
+    // await UserService.updateUser(key,)
   })
 }
 
@@ -36,9 +64,10 @@ export const addFriends = (...props: Props) => {
       const isExist = noticeRes.some(item => item.dataValues.desc === self_id)
       if (isExist) return
 
-      const friendRes = await newNotice({
+      const friendRes = await NoticeService.createNotice({
         notice_id: nanoid(10),
-        user_id,
+        target_id: user_id,
+        source_id: self_id,
         type: "0",
         desc: self_id
       })
@@ -48,11 +77,9 @@ export const addFriends = (...props: Props) => {
         "nick_name"
       ])
       const newData = {
-        notice: {
-          type: friendRes.type,
-          nocite_id: friendRes.notice_id
-        },
-        data: { ...userRes, timestamp: new Date() }
+        ...friendRes,
+        source: { ...userRes },
+        createdAt: new Date()
       }
 
       socket.to(userSocketId).emit("friendsRequest", newData)
@@ -68,6 +95,7 @@ export const agreeRequest = (...props: Props) => {
   socket.on(
     "agreeRequest",
     async (user_id: string, friend_id: string, notice_id: string, callback) => {
+      console.log(user_id, friend_id, notice_id)
       try {
         await seq.transaction(async () => {
           await FriendsService.createFriend(user_id, friend_id)
@@ -93,11 +121,12 @@ export const rejectRequest = (...props: Props) => {
       try {
         await NoticeService.updateNotice(notic_id, true, "00")
         const userRes = await UserService.queryUser({ user_id }, ["nick_name"])
-        const noticeRes = await newNotice({
+        const noticeRes = await NoticeService.createNotice({
           notice_id: nanoid(10),
           type: "00",
           desc: `用户[${userRes.nick_name}]拒绝了你的好友请求`,
-          user_id: friend_id
+          target_id: friend_id,
+          source_id: user_id
         })
         const newData = {
           notice: {

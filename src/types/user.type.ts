@@ -18,6 +18,7 @@ export interface UserType extends RegisterData {
   user_id: string
   createdAt: string
   updatedAt: string
+  offline: string
 }
 
 export interface CompressRequestType {

@@ -14,7 +14,8 @@ import {
   addFriends,
   agreeRequest,
   connected_root,
-  rejectRequest
+  rejectRequest,
+  disconnect
 } from "../socket/notice.js"
 import {
   groupChat,
@@ -56,6 +57,7 @@ app
 /* socket启动 */
 const OnRoot = (socket: Socket) => {
   connected_root(io, socket)
+  disconnect(io, socket)
   addFriends(io, socket)
   agreeRequest(io, socket)
   rejectRequest(io, socket)
@@ -66,9 +68,6 @@ const OnChat = (socket: Socket) => {
   connectd_chat(io, socket)
   privateChatHistory(io, socket)
   privateChat(io, socket)
-
-  /* 退出 */
-  socket.on("disconnection", () => console.log("有程序退出了"))
 }
 
 const OnGroupChat = (socket: Socket) => {

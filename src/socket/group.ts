@@ -3,7 +3,10 @@ import { MessageType } from "chat.type"
 import { Server, Socket } from "socket.io"
 import ChatHistoryService from "../service/chat_history.service.js"
 import ChatGroupService from "../service/chat_group.service.js"
+import { nanoid } from "nanoid"
 type Props = [Server, Socket]
+
+
 
 /* 群聊 */
 export const groupChat = async (...props: Props) => {
@@ -20,7 +23,7 @@ export const groupChat = async (...props: Props) => {
     try {
       /* 存储 */
       result.status = 1
-      await ChatHistoryService.newMessage(result)
+      await ChatHistoryService.newMessage({ ...result, ch_id: nanoid(10) })
       /* 转发给群组 */
       socket.to(room_id).emit("group_messages", params)
       /* 新消息提醒 */

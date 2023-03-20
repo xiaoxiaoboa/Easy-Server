@@ -11,11 +11,17 @@ const Notice = seq.define(
       unique: true,
       comment: "id"
     },
-    user_id: {
+    target_id: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: false,
-      comment: "用户ID"
+      comment: "目标ID"
+    },
+    source_id: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: false,
+      comment: "来源ID"
     },
     type: {
       type: DataTypes.STRING,
@@ -43,10 +49,11 @@ export default Notice
 
 // Notice.sync({ force: true })
 
-User.hasMany(Notice, { foreignKey: "user_id", sourceKey: "user_id" })
+User.hasMany(Notice, { foreignKey: "target_id", sourceKey: "user_id" })
 
 Notice.belongsTo(User, {
   targetKey: "user_id",
-  foreignKey: "user_id",
+  foreignKey: "target_id",
   onDelete: "CASCADE"
 })
+

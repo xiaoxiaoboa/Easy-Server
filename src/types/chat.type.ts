@@ -14,7 +14,12 @@ export interface MessageType {
   status: number
 }
 
-export type MessageSaveType = Omit<MessageType, "createdAt" | "user" | "conversation_id">
+export type MessageSaveType = Omit<
+  MessageType,
+  "createdAt" | "user" | "conversation_id"
+> & {
+  ch_id: string
+}
 
 export interface ChatGroupSaveType {
   group_id: string

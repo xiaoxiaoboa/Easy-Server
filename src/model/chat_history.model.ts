@@ -5,6 +5,12 @@ import User from "./user.model.js"
 const ChatHistory = seq.define(
   "chat_history",
   {
+    ch_id: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+      comment: "id"
+    },
     user_id: {
       type: DataTypes.STRING,
       allowNull: false,

@@ -2,6 +2,11 @@ import { MessageType } from "chat.type.js"
 import { Server, Socket } from "socket.io"
 import ChatHistoryService from "../service/chat_history.service.js"
 import { socketIdMap as notice_socketIds } from "./notice.js"
+import NoticeService from "../service/notice.service.js"
+import { nanoid } from "nanoid"
+import { NoticeType } from "notice.type.js"
+import { getNoticeMessageData } from "../controller/notice.controller.js"
+import userService from "../service/user.service.js"
 
 type Props = [Server, Socket]
 
@@ -14,6 +19,8 @@ export const connectd_chat = (...props: Props) => {
   socket.on("connected", async (socket_id: string, user_id: string) => {
     socketIdMap.set(user_id, socket_id)
   })
+
+  
 }
 
 /* 取回聊天记录 */
@@ -34,20 +41,59 @@ export function privateChat(...props: Props) {
   const [io, socket] = props
 
   /* 监听私聊消息 */
-  socket.on("private_chat", async (params: MessageType) => {
+  socket.on("private_chat", async (params: MessageType, callback) => {
     const toSocket_id = socketIdMap.get(params.to_id)
+    callback(true)
     try {
       const { createdAt, user, ...result } = params
       /* 存储 */
-      await ChatHistoryService.newMessage(result)
+      const messageRes = await ChatHistoryService.newMessage({
+        ...result,
+        ch_id: nanoid(10),
+        status: 1
+      })
 
       /* 转发给对方 */
-      socket.to(toSocket_id).emit("private_message", params)
+      socket
+        .to(toSocket_id)
+        .timeout(2000)
+        .emit("private_message", params, async (err: any, res: any) => {
+          // console.log(res, err)
+          if (res.length === 0) {
+            const newNoticeData = {
+              notice_id: nanoid(10),
+              target_id: params.to_id,
+              source_id: params.user_id,
+              type: "1",
+              desc: messageRes.dataValues.ch_id
+            }
+            /* 存储notice */
+            await NoticeService.createNotice(newNoticeData)
 
-      
-      
-      /* 发送新消息通知 */
-      io.of("/").to(notice_socketIds.get(params.to_id)).emit("new_message", params)
+            const userRes = await userService.queryUser(
+              { user_id: newNoticeData.source_id },
+              ["user_id", "avatar", "nick_name"]
+            )
+
+            const newData = {
+              ...newNoticeData,
+              done: false,
+              source: userRes,
+              message: messageRes
+            }
+            /* 发送新消息通知 */
+            io.of("/").to(notice_socketIds.get(params.to_id)).emit("new_message", newData)
+          } else if (res[0] !== "nosave") {
+            const newData = {
+              notice_id: nanoid(10),
+              target_id: params.to_id,
+              source_id: params.user_id,
+              type: "1",
+              desc: messageRes.dataValues.ch_id
+            }
+            await NoticeService.createNotice(newData)
+          }
+        })
     } catch (err) {
       console.log(err)
     }
