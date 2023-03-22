@@ -19,7 +19,7 @@ const User_Favourite = seq.define(
       comment: "feed ID"
     }
   },
-  { tableName: "user_favourite", updatedAt: false }
+  { tableName: "user_favourite", updatedAt: false, charset: "utf8mb4" }
 )
 
 // User_Favourite.sync({ force: true })

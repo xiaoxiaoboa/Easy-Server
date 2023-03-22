@@ -3,18 +3,18 @@ import Feed from "../model/feed.model.js"
 import Feed_Liked from "../model/feed_liked.model.js"
 import Feed_Comment from "../model/feed_comment.model.js"
 import User from "../model/user.model.js"
-import { Feed_attachServiceType } from "../types/feed_attach.type.js"
-import { Feed_LikedServiceType } from "../types/feed_liked.type.js"
+import {} from "../types/feed_attach.type.js"
+import { Feed_LikedType } from "../types/feed_liked.type.js"
 import User_Favourite from "../model/user_favourite.model.js"
 import seq from "../db/seq.js"
 import { QueryUserFeedsType } from "feed.type.js"
-import { QueryTypes } from "sequelize"
+import { QueryTypes, Transaction } from "sequelize"
 
 class FeedService {
   /* 创建帖子 */
-  async createFeed(data: any) {
+  async createFeed(data: any, t: Transaction) {
     try {
-      const newFeed = await Feed.create({ ...data })
+      const newFeed = await Feed.create({ ...data }, { transaction: t })
       return newFeed.dataValues
     } catch (err) {
       throw Error("", { cause: err })
@@ -25,11 +25,11 @@ class FeedService {
   async getAllFeeds(limit: number, offset: number) {
     try {
       const allFeeds = await Feed.findAll({
-        limit: limit,
-        offset: offset,
+        limit,
+        offset,
         include: [
-          Feed_Liked,
           Feed_attach,
+          Feed_Liked,
           User_Favourite,
           { model: User, attributes: ["user_id", "nick_name", "avatar"] }
         ],
@@ -44,12 +44,12 @@ class FeedService {
             ]
           ]
         },
-
         order: [["createdAt", "DESC"]]
       })
 
-      return JSON.stringify(allFeeds)
+      return allFeeds
     } catch (err) {
+      console.log(err)
       throw Error("", { cause: err })
     }
   }
@@ -75,22 +75,32 @@ class FeedService {
         where: { feed_userID: params.user_id },
         include: [
           Feed_Liked,
-          Feed_Comment,
           Feed_attach,
           { model: User_Favourite, attributes: ["user_id", "createdAt"] },
           { model: User, attributes: ["user_id", "nick_name", "avatar"] }
         ],
+        attributes: {
+          include: [
+            /* 查询每个帖子的评论数量 */
+            [
+              seq.literal(
+                `(SELECT COUNT(*) FROM feed_comment WHERE feed_comment.feed_id = feed.feed_id)`
+              ),
+              "comment_count"
+            ]
+          ]
+        },
         order: [["createdAt", "DESC"]]
       })
 
-      return JSON.stringify(allFeeds)
+      return allFeeds
     } catch (err) {
       throw Error("", { cause: err })
     }
   }
 
   /* 点赞 */
-  async modifyFeed_like(params: { feed_id: string; liked: string; count: number }) {
+  async modifyFeed_like(params: Feed_LikedType) {
     try {
       const result = await Feed_Liked.update(
         { ...params },
@@ -120,9 +130,45 @@ class FeedService {
   async queryFeed_comment(feed_id: string) {
     try {
       const res = seq.query(
-        `SELECT feed_comment.comment,feed_comment.comment_id,feed_comment.feed_id,feed_comment.user_id,feed_comment.createdAt,users.avatar,users.nick_name FROM feed_comment  LEFT JOIN users ON (feed_comment.user_id = users.user_id) WHERE feed_id = '${feed_id}'`,
+        `SELECT feed_comment.comment,feed_comment.comment_id,feed_comment.feed_id,feed_comment.user_id,feed_comment.createdAt,users.avatar,users.nick_name FROM feed_comment  LEFT JOIN users ON (feed_comment.user_id = users.user_id) WHERE feed_id = '${feed_id}' ORDER BY feed_comment.createdAt ASC`,
         { raw: true, type: QueryTypes.SELECT }
       )
+      return res
+    } catch (err) {
+      throw Error("", { cause: err })
+    }
+  }
+
+  /* 获取用户收藏的帖子 */
+  async queryFavouriteFeed(user_id: string, limit: number, offset: number) {
+    try {
+      const res = await User_Favourite.findAll({
+        limit,
+        offset,
+        where: { user_id },
+        include: [
+          {
+            model: Feed,
+            include: [
+              Feed_Liked,
+              Feed_attach,
+              User_Favourite,
+              { model: User, attributes: ["user_id", "nick_name", "avatar"] }
+            ],
+            attributes: {
+              include: [
+                /* 查询每个帖子的评论数量 */
+                [
+                  seq.literal(
+                    `(SELECT COUNT(*) FROM feed_comment WHERE feed_comment.feed_id = feed.feed_id)`
+                  ),
+                  "comment_count"
+                ]
+              ]
+            }
+          }
+        ]
+      })
       return res
     } catch (err) {
       throw Error("", { cause: err })

@@ -19,7 +19,8 @@ const compressImg = async (ctx: CommonControllerCTX, next: CommonControllerNEXT)
 
     ctx.body = response(1, "图片处理成功", data)
   } catch (err) {
-    ctx.body = err
+    ctx.status = 500
+    ctx.body = response(1, "图片处理失败", `${err}`)
   }
 }
 

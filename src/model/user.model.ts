@@ -45,11 +45,17 @@ const User = seq.define(
       allowNull: false,
       unique: false,
       comment: "处理过的用户背景图"
+    },
+    offline: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      unique: false,
+      comment: "下线时间"
     }
   },
-  { tableName: "users" }
+  { tableName: "users", updatedAt: false, charset: "utf8mb4" }
 )
 
 // User.sync({ force: true })
-// User.hasMany(Feed, { foreignKey: "feed_userID", sourceKey: "user_id" })
+
 export default User

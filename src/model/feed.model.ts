@@ -27,7 +27,7 @@ const Feed = seq.define(
       comment: "feed 内容"
     }
   },
-  { tableName: "feed" }
+  { tableName: "feed", charset: "utf8mb4" }
 )
 
 // Feed.sync({ force: true })
