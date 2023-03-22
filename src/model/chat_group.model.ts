@@ -3,6 +3,7 @@ import seq from "../db/seq.js"
 
 const ChatGroup = seq.define(
   "chat_group",
+
   {
     group_id: {
       type: DataTypes.STRING,
@@ -35,7 +36,7 @@ const ChatGroup = seq.define(
       comment: "群组描述"
     }
   },
-  { tableName: "chat_group", updatedAt: false }
+  { tableName: "chat_group", updatedAt: false, charset: "utf8mb4" }
 )
 
 export default ChatGroup

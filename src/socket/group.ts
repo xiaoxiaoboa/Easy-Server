@@ -4,9 +4,8 @@ import { Server, Socket } from "socket.io"
 import ChatHistoryService from "../service/chat_history.service.js"
 import ChatGroupService from "../service/chat_group.service.js"
 import { nanoid } from "nanoid"
+import UserService from "../service/user.service.js"
 type Props = [Server, Socket]
-
-
 
 /* 群聊 */
 export const groupChat = async (...props: Props) => {
@@ -17,17 +16,52 @@ export const groupChat = async (...props: Props) => {
     await joinRoom(user_id, socket)
   })
 
+  /* 查询用户下线后未读的消息 */
+  socket.on("unreadMessages", async (to_id: string[], user_id: string, callback) => {
+    const user = await UserService.queryUser({ user_id })
+    const offline = user.offline
+
+    const ids = to_id.map(i => `'${i}'`)
+    const res = await ChatHistoryService.queryUnreadGroupMessages(ids, offline)
+
+    callback(res)
+  })
+
   /* 监听群组消息 */
   socket.on("group_chat", async (room_id: string, params: MessageType, callback) => {
     const { createdAt, user, ...result } = params
     try {
       /* 存储 */
       result.status = 1
-      await ChatHistoryService.newMessage({ ...result, ch_id: nanoid(10) })
+      const messageRes = await ChatHistoryService.newMessage({
+        ...result,
+        ch_id: nanoid(10)
+      })
       /* 转发给群组 */
-      socket.to(room_id).emit("group_messages", params)
-      /* 新消息提醒 */
-      io.of("/").to(room_id).emit("new_message", params)
+      socket.to(room_id).emit("group_messages", params, async (err: any, res: any) => {
+        console.log(res)
+        if (res.length === 0) {
+          /* 新消息提醒 */
+          const groupRes = await ChatGroupService.queryGroup(params.to_id)
+          const newData = {
+            notice_id: nanoid(10),
+            target_id: params.to_id,
+            source_id: params.to_id,
+            type: "1",
+            desc: "",
+            done: 0,
+            source: {
+              avatar: groupRes.group_avatar,
+              nick_name: groupRes.group_name,
+              user_id: groupRes.group_id
+            },
+            message: messageRes,
+            createdAt: messageRes.dataValues.createdAt
+          }
+          io.of("/").to(room_id).emit("new_notice_message", newData)
+        } else if (res[0] !== "nosave") {
+        }
+      })
 
       callback(true)
     } catch (err) {

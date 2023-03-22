@@ -19,7 +19,7 @@ const Feed_Liked = seq.define(
       comment: "feed被点赞的用户"
     }
   },
-  { tableName: "feed_liked", timestamps: false }
+  { tableName: "feed_liked", timestamps: false, charset: "utf8mb4" }
 )
 
 // Feed_Liked.sync({ force: true })

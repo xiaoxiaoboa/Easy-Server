@@ -27,6 +27,18 @@ class ChatGroupService {
       throw Error("", { cause: err })
     }
   }
+
+  /* 查询 */
+  async queryGroup(group_id: string) {
+    try {
+      const res = await ChatGroup.findOne({
+        where: { group_id }
+      })
+      return res?.dataValues
+    } catch (err) {
+      throw Error("", { cause: err })
+    }
+  }
 }
 
 export default new ChatGroupService()

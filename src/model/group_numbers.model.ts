@@ -19,7 +19,7 @@ const GroupNumbers = seq.define(
       comment: "成员id"
     }
   },
-  { tableName: "group_numbers", updatedAt: false }
+  { tableName: "group_numbers", updatedAt: false, charset: "utf8mb4" }
 )
 export default GroupNumbers
 

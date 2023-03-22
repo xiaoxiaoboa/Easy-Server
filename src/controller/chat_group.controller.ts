@@ -7,6 +7,8 @@ import { dir_resource, path_images } from "../constant/path.constant.js"
 import seq from "../db/seq.js"
 import { attachUpload, upload } from "../util/upload.js"
 import fs from "fs/promises"
+import ChatHistoryService from "../service/chat_history.service.js"
+import userService from "../service/user.service.js"
 
 class ChatGroupController {
   /* 创建 */
@@ -62,6 +64,22 @@ class ChatGroupController {
     } catch (err) {
       ctx.status = 500
       ctx.body = response(0, "修改失败", `${err}`)
+    }
+  }
+
+  /* 查询群聊未读消息 */
+  async queryUnreadMessage(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
+    const data = ctx.request.body
+    try {
+      const user = await userService.queryUser({ user_id: data.user_id })
+      const offline = user.offline
+      const ids = (data.ids as string[]).map(i => `'${i}'`)
+      const res = await ChatHistoryService.queryUnreadGroupMessages(ids, offline)
+
+      ctx.body = response(1, "获取群聊未读消息", res)
+    } catch (err) {
+      ctx.status = 500
+      ctx.body = response(0, "获取失败", `${err}`)
     }
   }
 }

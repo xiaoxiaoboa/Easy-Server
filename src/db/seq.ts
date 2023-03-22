@@ -8,7 +8,10 @@ const seq = new Sequelize(db, root, pwd, {
   dialect: "mysql",
   dialectOptions: {
     dateStrings: true,
-    typeCast: true
+    typeCast: true,
+  },
+  define:{
+    charset:"utf8mb4"
   },
   timezone: "+08:00",
   logging: false

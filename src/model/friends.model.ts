@@ -18,7 +18,7 @@ const Friends = seq.define(
       comment: "用户好友的id"
     }
   },
-  { tableName: "friends", updatedAt: false }
+  { tableName: "friends", updatedAt: false, charset: "utf8mb4" }
 )
 export default Friends
 

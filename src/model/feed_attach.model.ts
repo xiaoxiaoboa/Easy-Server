@@ -37,7 +37,7 @@ const Feed_attach = seq.define(
       comment: "attach链接"
     }
   },
-  { tableName: "feed_attach", timestamps: false }
+  { tableName: "feed_attach", timestamps: false, charset: "utf8mb4" }
 )
 
 // Feed_attach.sync({ force: true })

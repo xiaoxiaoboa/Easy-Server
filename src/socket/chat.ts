@@ -5,7 +5,6 @@ import { socketIdMap as notice_socketIds } from "./notice.js"
 import NoticeService from "../service/notice.service.js"
 import { nanoid } from "nanoid"
 import { NoticeType } from "notice.type.js"
-import { getNoticeMessageData } from "../controller/notice.controller.js"
 import userService from "../service/user.service.js"
 
 type Props = [Server, Socket]
@@ -19,8 +18,6 @@ export const connectd_chat = (...props: Props) => {
   socket.on("connected", async (socket_id: string, user_id: string) => {
     socketIdMap.set(user_id, socket_id)
   })
-
-  
 }
 
 /* 取回聊天记录 */
@@ -68,7 +65,7 @@ export function privateChat(...props: Props) {
               desc: messageRes.dataValues.ch_id
             }
             /* 存储notice */
-            await NoticeService.createNotice(newNoticeData)
+            const noticeRes = await NoticeService.createNotice(newNoticeData)
 
             const userRes = await userService.queryUser(
               { user_id: newNoticeData.source_id },
@@ -77,12 +74,15 @@ export function privateChat(...props: Props) {
 
             const newData = {
               ...newNoticeData,
-              done: false,
+              done: 0,
               source: userRes,
-              message: messageRes
+              message: messageRes,
+              createdAt: noticeRes.createdAt
             }
             /* 发送新消息通知 */
-            io.of("/").to(notice_socketIds.get(params.to_id)).emit("new_message", newData)
+            io.of("/")
+              .to(notice_socketIds.get(params.to_id))
+              .emit("new_notice_message", newData)
           } else if (res[0] !== "nosave") {
             const newData = {
               notice_id: nanoid(10),

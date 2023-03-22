@@ -6,7 +6,7 @@ import {
   bcryptPwd
 } from "../middleware/user.middleware.js"
 import { auth } from "../middleware/auth.middleware.js"
-import { notice_query } from "../controller/notice.controller.js"
+import { notice_message, updateNotice, notice } from "../controller/notice.controller.js"
 
 const usersRouter = new Router()
 
@@ -19,8 +19,10 @@ usersRouter
   .post("/cover", auth, alterationCover)
   .post("/user", auth, queryUser)
   .post("/fav", auth, favourite)
-  .post("/notice", auth, notice_query)
   .post("/friends", auth, getFriends)
+  .post("/notice_message", auth, notice_message)
+  .post("/read", auth, updateNotice)
+  .post("/notice", auth, notice)
 
 /* 测试token */
 usersRouter.post("/test", auth, (ctx, next) => {

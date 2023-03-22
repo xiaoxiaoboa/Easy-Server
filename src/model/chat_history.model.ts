@@ -42,7 +42,7 @@ const ChatHistory = seq.define(
       comment: "消息状态"
     }
   },
-  { tableName: "chat_history", updatedAt: false }
+  { tableName: "chat_history", updatedAt: false, charset: "utf8mb4" }
 )
 export default ChatHistory
 

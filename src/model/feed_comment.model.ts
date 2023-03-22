@@ -31,7 +31,7 @@ const Feed_Comment = seq.define(
       comment: "feed的评论"
     }
   },
-  { tableName: "feed_comment", updatedAt: false }
+  { tableName: "feed_comment", updatedAt: false,charset:"utf8mb4" }
 )
 
 // Feed_Comment.sync({ force: true })

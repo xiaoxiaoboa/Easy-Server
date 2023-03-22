@@ -1,7 +1,6 @@
 import { io } from "../app/index.js"
 import { Server, Socket } from "socket.io"
 import NoticeService from "../service/notice.service.js"
-import { handleNotice } from "../controller/notice.controller.js"
 import UserService from "../service/user.service.js"
 import FriendsService from "../service/friends.service.js"
 import { nanoid } from "nanoid"
@@ -21,19 +20,6 @@ export const connected_root = (...props: Props) => {
   socket.on("connected", async (socket_id: string, user_id: string) => {
     await joinRoom(user_id, socket)
     socketIdMap.set(user_id, socket_id)
-  })
-
-  /* 查询用户下线后未读的消息 */
-  socket.on("unreadMessages", async (to_id: string[], user_id: string, callback) => {
-    const user = await UserService.queryUser({ user_id })
-    const offline = user.offline
-    // const groups = await GroupNumbersService.queryJoined(user_id)
-    // const groupIds = groups.map(i => i.group_id)
-
-    const ids = to_id.map(i => `'${i}'`)
-    const res = await ChatHistoryService.queryUserAll(ids, offline)
-
-    callback(res)
   })
 }
 /* 下线 */
@@ -60,7 +46,7 @@ export const addFriends = (...props: Props) => {
     const userSocketId = socketIdMap.get(user_id)
 
     try {
-      const noticeRes = await NoticeService.querySthNotic(user_id, "0")
+      const noticeRes = await NoticeService.queryFriendRequestNotic(user_id)
       const isExist = noticeRes.some(item => item.dataValues.desc === self_id)
       if (isExist) return
 
@@ -79,7 +65,8 @@ export const addFriends = (...props: Props) => {
       const newData = {
         ...friendRes,
         source: { ...userRes },
-        createdAt: new Date()
+        createdAt: new Date(),
+        msg: "申请成为你的好友"
       }
 
       socket.to(userSocketId).emit("friendsRequest", newData)
@@ -95,13 +82,30 @@ export const agreeRequest = (...props: Props) => {
   socket.on(
     "agreeRequest",
     async (user_id: string, friend_id: string, notice_id: string, callback) => {
-      console.log(user_id, friend_id, notice_id)
+      const userSocketId = socketIdMap.get(friend_id)
       try {
-        await seq.transaction(async () => {
-          await FriendsService.createFriend(user_id, friend_id)
-          await FriendsService.createFriend(friend_id, user_id)
-          await NoticeService.updateNotice(notice_id, true, "01")
+        await FriendsService.createFriend(user_id, friend_id)
+        await FriendsService.createFriend(friend_id, user_id)
+        await NoticeService.updateNotice(notice_id, true, "01")
+
+        const userRes = await UserService.queryUser({ user_id }, [
+          "nick_name",
+          "avatar",
+          "user_id"
+        ])
+        const noticeRes = await NoticeService.createNotice({
+          notice_id: nanoid(10),
+          type: "01",
+          desc: user_id,
+          target_id: friend_id,
+          source_id: user_id
         })
+        const newData = {
+          ...noticeRes,
+          source: userRes,
+          msg: "同意了你的好友申请"
+        }
+        socket.to(userSocketId).emit("agreeRequest", newData)
         callback("success")
       } catch (err) {
         console.log("好友信息存储失败")
@@ -116,24 +120,26 @@ export const rejectRequest = (...props: Props) => {
 
   socket.on(
     "rejectRequest",
-    async (notic_id: string, friend_id: string, user_id: string) => {
+    async (notice_id: string, friend_id: string, user_id: string) => {
       const userSocketId = socketIdMap.get(friend_id)
       try {
-        await NoticeService.updateNotice(notic_id, true, "00")
-        const userRes = await UserService.queryUser({ user_id }, ["nick_name"])
+        await NoticeService.updateNotice(notice_id, true, "0")
+        const userRes = await UserService.queryUser({ user_id }, [
+          "nick_name",
+          "avatar",
+          "user_id"
+        ])
         const noticeRes = await NoticeService.createNotice({
           notice_id: nanoid(10),
           type: "00",
-          desc: `用户[${userRes.nick_name}]拒绝了你的好友请求`,
+          desc: user_id,
           target_id: friend_id,
           source_id: user_id
         })
         const newData = {
-          notice: {
-            notice_id: noticeRes.nocite_id,
-            type: noticeRes.type
-          },
-          data: { msg: noticeRes.desc, timestamp: noticeRes.createdAt }
+          ...noticeRes,
+          source: userRes,
+          msg: "拒绝了你的好友申请"
         }
         socket.to(userSocketId).emit("rejectRequest", newData)
       } catch (err) {

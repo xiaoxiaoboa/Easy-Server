@@ -10,10 +10,12 @@ import seq from "../db/seq.js"
 import Feed_AttachService from "../service/feed_attach.service.js"
 import feed_likedService from "../service/feed_liked.service.js"
 import feed_commentService from "../service/feed_comment.service.js"
-import { favToParse, toParse } from "../util/conversionFeedType.js"
-import { Feed_attach } from "feed_attach.type.js"
 import { QueryUserFeedsType } from "feed.type.js"
 import { upload, attachUpload } from "../util/upload.js"
+import NoticeService from "../service/notice.service.js"
+import UserService from "../service/user.service.js"
+import { io } from "../app/index.js"
+import { socketIdMap } from "../socket/notice.js"
 
 const {
   createFeed,
@@ -22,7 +24,8 @@ const {
   modifyFeed_delete,
   queryUserFeeds,
   queryFeed_comment,
-  queryFavouriteFeed
+  queryFavouriteFeed,
+  queryOneFeed
 } = feedService
 const { create_attach, queryOneAttach, queryAllAttach } = Feed_AttachService
 const { create_like, queryOneLiked, deleteLiked } = feed_likedService
@@ -111,10 +114,31 @@ class FeedController {
       const isLiked = allLiked.find(i => i.dataValues.liked === data.user_id)
 
       if (isLiked) {
-        deleteLiked(data.feed_id, data.user_id)
+        await deleteLiked(data.feed_id, data.user_id)
         ctx.body = response(1, "取消点赞成功", null)
       } else {
-        create_like(data.feed_id, data.user_id)
+        await create_like(data.feed_id, data.user_id)
+        if (data.user_id !== data.feed_userId) {
+          const userRes = await UserService.queryUser({ user_id: data.user_id }, [
+            "nick_name",
+            "avatar",
+            "user_id"
+          ])
+          const noticeRes = await NoticeService.createNotice({
+            notice_id: nanoid(10),
+            source_id: data.user_id,
+            target_id: data.feed_userId,
+            desc: data.user_id,
+            type: "3"
+          })
+          const newData = {
+            ...noticeRes,
+            source: userRes,
+            msg: "给你的帖子点赞啦"
+          }
+
+          io.of("/").to(socketIdMap.get(data.feed_userId)).emit("notice", newData)
+        }
         ctx.body = response(1, "点赞成功", null)
       }
     } catch (err) {
@@ -166,6 +190,28 @@ class FeedController {
     const data = ctx.request.body
     try {
       const res = await create_comment({ ...data })
+
+      const userRes = await UserService.queryUser({ user_id: data.user_id }, [
+        "nick_name",
+        "avatar",
+        "user_id"
+      ])
+      const noticeRes = await NoticeService.createNotice({
+        notice_id: nanoid(10),
+        source_id: data.user_id,
+        target_id: data.feed_userId,
+        desc: data.user_id,
+        type: "2"
+      })
+
+      const newData = {
+        ...noticeRes,
+        source: userRes,
+        msg: "给你的帖子评论啦",
+        comment_msg: data.comment
+      }
+
+      io.of("/").to(socketIdMap.get(data.feed_userId)).emit("notice", newData)
       ctx.body = response(1, "发布评论", null)
     } catch (err) {
       ctx.status = 500

@@ -53,8 +53,9 @@ const User = seq.define(
       comment: "下线时间"
     }
   },
-  { tableName: "users", updatedAt: false }
+  { tableName: "users", updatedAt: false, charset: "utf8mb4" }
 )
 
 // User.sync({ force: true })
+
 export default User

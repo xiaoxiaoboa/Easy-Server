@@ -16,21 +16,31 @@ class NoticeController {
     }
   }
 
+  /* 查询指定id的notice */
+  async query(notice_id: string) {
+    try {
+      const res = await Notice.findOne({ where: { notice_id } })
+      return res
+    } catch (err) {
+      throw Error("", { cause: err })
+    }
+  }
+
   /* 查询用户全部未读私聊消息 */
-  async queryNotice(target_id: string, type: string) {
+  async queryMessageNotice(target_id: string, type: string) {
     try {
       const res: any[] = await seq.query(
         `(SELECT notice.*, t.total
               FROM notice
               JOIN (
-                SELECT target_id, source_id, MAX(createdAt) AS createdAt, COUNT(*) AS total
+                SELECT target_id, source_id, MAX(id) AS id, COUNT(*) AS total
                 FROM notice
-                WHERE target_id = '${target_id}'AND type = ${type} AND done= 0
+                WHERE target_id = '${target_id}'AND type = '${type}' AND done= 0
                 GROUP BY source_id
               ) AS t
               ON notice.target_id = t.target_id
               AND notice.source_id = t.source_id
-              AND notice.createdAt = t.createdAt
+              AND notice.id = t.id
               ORDER BY notice.createdAt DESC)`,
         { type: QueryTypes.SELECT }
       )
@@ -68,15 +78,33 @@ class NoticeController {
     }
   }
 
-  /* 查询用户某个类型的notice */
-  async querySthNotic(target_id: string, type: string) {
+  /* 查询好友请求 */
+  async queryFriendRequestNotic(target_id: string) {
     try {
       const res = await Notice.findAll({
         where: {
-          [Op.and]: [{ target_id }, { type }, { done: 0 }]
+          [Op.and]: [{ target_id }, { type: "0" }, { done: 0 }]
         },
         attributes: ["desc"]
       })
+      return res
+    } catch (err) {
+      throw Error("", { cause: err })
+    }
+  }
+
+  /* 查询点赞评论好友请求的未读通知 */
+  async queryNotice(target_id: string) {
+    try {
+      const res = await Notice.findAll({
+        where: {
+          target_id,
+          [Op.or]: [{ type: { [Op.like]: "0%" } }, { type: { [Op.in]: ["2", "3"] } }],
+          done: 0
+        },
+        order: [["createdAt", "DESC"]]
+      })
+
       return res
     } catch (err) {
       throw Error("", { cause: err })
@@ -88,6 +116,35 @@ class NoticeController {
     try {
       const res = await Notice.update({ done, type }, { where: { notice_id } })
       return res
+    } catch (err) {
+      throw Error("", { cause: err })
+    }
+  }
+
+  /* 已读通知 */
+  async updateRelateToSource({
+    source_id,
+    notice_id
+  }: {
+    source_id?: string
+    notice_id?: string
+  }) {
+    try {
+      if (source_id) {
+        await Notice.update(
+          { done: 1 },
+          {
+            where: { source_id }
+          }
+        )
+      } else if (notice_id) {
+        await Notice.update(
+          { done: 1 },
+          {
+            where: { notice_id }
+          }
+        )
+      }
     } catch (err) {
       throw Error("", { cause: err })
     }

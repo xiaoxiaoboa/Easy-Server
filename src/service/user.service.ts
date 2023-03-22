@@ -3,6 +3,7 @@ import Feed from "../model/feed.model.js"
 import bcrypt from "bcrypt"
 import { hashedPwdType, LoginData, QueryUserParamsType, UserType } from "user.type.js"
 import User_Favourite from "../model/user_favourite.model.js"
+import { Op } from "sequelize"
 
 class UserService {
   /* 注册操作 */
@@ -26,6 +27,18 @@ class UserService {
       }
     })
     return user?.dataValues
+  }
+  /* 查询用户 */
+  async queryManyUsers(user_ids: string[]) {
+    const user = await User.findAll({
+      where: {
+        user_id: {
+          [Op.in]: [...user_ids]
+        }
+      },
+      attributes: ["user_id", "avatar", "nick_name"]
+    })
+    return user
   }
 
   /* 更新用户 */

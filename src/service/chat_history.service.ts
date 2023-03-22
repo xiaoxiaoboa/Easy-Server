@@ -61,8 +61,9 @@ class ChatHistoryService {
     }
   }
 
-  /* 查询用户下线后未读的私聊消息 */
-  async queryUserAll(to_id: string[], offline: string) {
+  /* 查询用户下线后未读的群聊消息 */
+  async queryUnreadGroupMessages(to_id: string[], offline: string) {
+    const result: any[] = []
     try {
       const res: any[] = await seq.query(
         `(
@@ -92,48 +93,47 @@ class ChatHistoryService {
       )
 
       if (res.length > 0) {
-        /* ===============查用户========================== */
-        const user_ids = res.map(i => `'${i.user_id}'`)
-        const users: any[] = await seq.query(
-          `(
-          SELECT  u.user_id,u.nick_name,u.avatar FROM users as u WHERE u.user_id IN (${user_ids.join(
-            ","
-          )})
-        )`,
-          { type: QueryTypes.SELECT }
-        )
-        res.forEach(item => {
-          item.source = users.find(i => i.user_id === item.user_id)
-          item.isGroup = false
-          item.read = false
-        })
-
         /* ===============查群组========================== */
-        const groupMessages = res.filter(i => i.to_id[0] === "g")
-        if (groupMessages.length > 0) {
-          const group_ids = groupMessages.map(i => `'${i.to_id}'`)
 
-          const groups: any[] = await seq.query(
-            `(
+        const group_ids = res.map(i => `'${i.to_id}'`)
+
+        const groups: any[] = await seq.query(
+          `(
             SELECT cg.group_id, cg.group_avatar, cg.group_name FROM chat_group as cg WHERE cg.group_id IN (${group_ids.join(
               ","
             )})
             )`,
-            { type: QueryTypes.SELECT }
-          )
-          res.forEach(item => {
-            if (item.to_id[0] === "g") {
-              item.source = {
-                ...item.source,
-                group: groups.find(i => i.group_id === item.to_id)
-              }
-              item.isGroup = true
-            }
-          })
-        }
+          { type: QueryTypes.SELECT }
+        )
+        res.forEach(item => {
+          const newData = {
+            notice_id: "",
+            target_id: "",
+            source_id: "",
+            type: "1",
+            desc: "",
+            done: 0,
+            message: "",
+            total: "",
+            source: {},
+            createdAt: ""
+          }
+          ;(newData.notice_id = groups.find(i => i.group_id === item.to_id).group_id),
+            (newData.target_id = groups.find(i => i.group_id === item.to_id).group_id),
+            (newData.source_id = item.user_id),
+            (newData.message = item)
+          newData.total = item.total
+          newData.createdAt = item.createdAt
+          newData.source = {
+            user_id: groups.find(i => i.group_id === item.to_id).group_id,
+            avatar: groups.find(i => i.group_id === item.to_id).group_avatar,
+            nick_name: groups.find(i => i.group_id === item.to_id).group_name
+          }
+          result.push(newData)
+        })
       }
 
-      return res as any[]
+      return result
     } catch (err) {
       throw Error("", { cause: err })
     }

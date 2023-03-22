@@ -43,7 +43,7 @@ const Notice = seq.define(
       defaultValue: false
     }
   },
-  { tableName: "notice", updatedAt: false }
+  { tableName: "notice", updatedAt: false, charset: "utf8mb4" }
 )
 export default Notice
 
