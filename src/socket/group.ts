@@ -108,7 +108,7 @@ export const groupMumbers = async (...props: Props) => {
   })
 }
 
-/* 更新 */
+/* 更新群组名称或简介 */
 export const groupUpdate = (...props: Props) => {
   const [io, socket] = props
 

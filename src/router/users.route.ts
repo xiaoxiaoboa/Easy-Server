@@ -10,8 +10,15 @@ import { notice_message, updateNotice, notice } from "../controller/notice.contr
 
 const usersRouter = new Router()
 
-const { login, register, alterationCover, queryUser, favourite, getFriends } =
-  usersController
+const {
+  login,
+  register,
+  alterationCover,
+  queryUser,
+  favourite,
+  getFriends,
+  messageUpload
+} = usersController
 
 usersRouter
   .post("/login", loginIsExistVerify, login)
@@ -23,6 +30,7 @@ usersRouter
   .post("/notice_message", auth, notice_message)
   .post("/read", auth, updateNotice)
   .post("/notice", auth, notice)
+  .post("/message_upload", auth, messageUpload)
 
 /* 测试token */
 usersRouter.post("/test", auth, (ctx, next) => {

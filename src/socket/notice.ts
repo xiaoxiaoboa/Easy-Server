@@ -68,7 +68,7 @@ export const addFriends = (...props: Props) => {
         createdAt: new Date(),
         msg: "申请成为你的好友"
       }
-
+      console.log(newData)
       socket.to(userSocketId).emit("friendsRequest", newData)
     } catch (err) {
       console.log("好友请求信息数据库存储失败")

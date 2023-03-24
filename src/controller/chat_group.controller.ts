@@ -9,6 +9,7 @@ import { attachUpload, upload } from "../util/upload.js"
 import fs from "fs/promises"
 import ChatHistoryService from "../service/chat_history.service.js"
 import userService from "../service/user.service.js"
+import filesCheck from "../util/filesCheck.js"
 
 class ChatGroupController {
   /* 创建 */
@@ -53,6 +54,8 @@ class ChatGroupController {
     const data = ctx.request.body
 
     try {
+      /* 检查文件大小 */
+      await filesCheck(files!)
       const newData = await attachUpload(files!, JSON.parse(data.group_id))
       if (newData[0]) {
         await ChatGroupService.update(JSON.parse(data.group_id), {

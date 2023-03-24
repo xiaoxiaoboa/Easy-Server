@@ -51,6 +51,7 @@ export const attachUpload = (
   user_id: string
 ): Promise<Feed_attach[]> => {
   return new Promise((resolve, reject) => {
+    
     const files = Object.values(data)
 
     let filesData: Feed_attach[] = []

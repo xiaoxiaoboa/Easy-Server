@@ -6,11 +6,19 @@ import response from "../util/response.js"
 import getDefaultImg from "../util/getDefaultImg.js"
 import fs from "fs/promises"
 import sharp from "sharp"
-import { AlterationCoverType, hashedPwdType, LoginData, UserType } from "user.type.js"
-import { dir_resource, path_images, path_videos } from "../constant/path.constant.js"
+import { hashedPwdType, LoginData, UserType } from "user.type.js"
+import {
+  dir_resource,
+  dir_upload,
+  path_images,
+  path_videos
+} from "../constant/path.constant.js"
 import UserFavouriteService from "../service/user_favourite.service.js"
 import seq from "../db/seq.js"
 import FriendsService from "../service/friends.service.js"
+import { File } from "../types/upload.type.js"
+import { upload } from "../util/upload.js"
+import filesCheck from "../util/filesCheck.js"
 
 const { userRegister, userLogin, queryUser, updateUser } = userService
 const { queryFavourite, deleteFavourite, newFav } = UserFavouriteService
@@ -65,41 +73,40 @@ class UsersController {
 
   /* 修改封面 */
   async alterationCover(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
-    const requestData: AlterationCoverType = ctx.request.body
-    const filesName: string[] = []
-
+    const data = ctx.request.body
+    const file = ctx.request.files
+    const newFileName = (file?.background as File).newFilename
+    const newData = JSON.parse(data.data)
     try {
-      for (let item in requestData.base64) {
-        /* 获取Base64码 */
-        const [base64Head, base64] =
-          requestData.base64[item as keyof typeof requestData.base64].split(",")
-        /* 将base64转换为Buffer */
-        const buf = Buffer.from(base64, "base64")
-
-        const fileName = item + Date.now()
-        /* 保存到本地 */
-        await sharp(buf).toFile(
-          `${dir_resource}${path_images}${requestData.user_id}/${fileName}.webp`
-        )
-        filesName.push(fileName)
-      }
-
       /* 图片的地址 */
       const path = {
-        profile_img: `/images/${requestData.user_id}/${filesName[0]}.webp`,
-        profile_blurImg: `/images/${requestData.user_id}/${filesName[1]}.webp`
+        profile_img: `/images/${newData.user_id}/${newFileName}`,
+        profile_blurImg: `/images/${newData.user_id}/${newData.blur.fileName}`
       }
 
       /* 更新数据库 */
-      await updateUser(requestData.user_id, path)
+      await updateUser(newData.user_id, path)
 
       /* 返回更新后的用户信息 */
-      const userRes = await queryUser({ user_id: requestData.user_id })
+      const userRes = await queryUser({ user_id: newData.user_id })
+
+      /* 移动文件到用户文件夹 */
+      const base64 = newData.blur.base64.split(",")[1]
+      const buf = Buffer.from(base64, "base64")
+      await sharp(buf).toFile(
+        `${dir_resource}${path_images}${newData.user_id}/${newData.blur.fileName}`
+      )
+
+      await fs.rename(
+        `${dir_upload}/${newFileName}`,
+        `${dir_resource}${path_images}${newData.user_id}/${newFileName}`
+      )
 
       const { passwd, ...result } = userRes
       ctx.body = response(1, "修改成功", result)
     } catch (err) {
       ctx.status = 500
+      console.log(err)
       ctx.body = response(0, "修改失败", err)
     }
   }
@@ -158,6 +165,28 @@ class UsersController {
     } catch (err) {
       ctx.status = 500
       ctx.body = response(0, "查找好友失败", `${err}`)
+    }
+  }
+
+  /* 上传聊天中的图片或视频 */
+  async messageUpload(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
+    const data = ctx.request.body
+    const files = ctx.request.files
+    const file = Object.values(files!)[0]
+    let path: string = ""
+    try {
+      /* 检查文件 */
+      // await filesCheck(files!)
+      if ((file as File).mimetype?.includes("image")) {
+        path = `${path_images}${data.user_id}/${(file as File).newFilename}`
+      } else if ((file as File).mimetype?.includes("video")) {
+        path = `${path_videos}${data.user_id}/${(file as File).newFilename}`
+      }
+      await upload(files!, data.user_id)
+      ctx.body = response(1, "上传图片", path)
+    } catch (err) {
+      ctx.status = 500
+      ctx.body = response(0, "上传失败", `${err}`)
     }
   }
 }
