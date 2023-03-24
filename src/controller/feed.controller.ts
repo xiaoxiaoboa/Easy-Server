@@ -16,6 +16,7 @@ import NoticeService from "../service/notice.service.js"
 import UserService from "../service/user.service.js"
 import { io } from "../app/index.js"
 import { socketIdMap } from "../socket/notice.js"
+import filesCheck from "../util/filesCheck.js"
 
 const {
   createFeed,
@@ -42,6 +43,8 @@ class FeedController {
 
     const feed_id = nanoid(12)
     try {
+      /* 检查文件大小 */
+      await filesCheck(files!)
       /* 使用事务 */
       const result = await seq.transaction(async t => {
         /* 把移动后的文件组成可存入数据库的格式 */

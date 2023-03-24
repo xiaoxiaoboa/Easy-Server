@@ -74,7 +74,7 @@ export function privateChat(...props: Props) {
 
             const newData = {
               ...newNoticeData,
-              done: 0,
+              done: false,
               source: userRes,
               message: messageRes,
               createdAt: noticeRes.createdAt

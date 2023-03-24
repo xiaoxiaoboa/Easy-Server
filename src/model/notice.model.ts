@@ -36,11 +36,11 @@ const Notice = seq.define(
       comment: "内容"
     },
     done: {
-      type: DataTypes.BOOLEAN,
+      type: DataTypes.INTEGER,
       allowNull: false,
       unique: false,
       comment: "是否完成",
-      defaultValue: false
+      defaultValue: 0
     }
   },
   { tableName: "notice", updatedAt: false, charset: "utf8mb4" }

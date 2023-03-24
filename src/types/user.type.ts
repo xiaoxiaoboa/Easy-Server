@@ -27,13 +27,7 @@ export interface CompressRequestType {
   base64: string
 }
 
-export interface AlterationCoverType {
-  user_id: string
-  base64: {
-    background: string
-    background_blur: string
-  }
-}
+
 
 export interface QueryUserParamsType {
   [key: string]: string
