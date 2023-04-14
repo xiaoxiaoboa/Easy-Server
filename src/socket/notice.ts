@@ -44,7 +44,6 @@ export const addFriends = (...props: Props) => {
 
   socket.on("friendsRequest", async (self_id: string, user_id: string) => {
     const userSocketId = socketIdMap.get(user_id)
-
     try {
       const noticeRes = await NoticeService.queryFriendRequestNotic(user_id)
       const isExist = noticeRes.some(item => item.dataValues.desc === self_id)
@@ -68,7 +67,6 @@ export const addFriends = (...props: Props) => {
         createdAt: new Date(),
         msg: "申请成为你的好友"
       }
-      console.log(newData)
       socket.to(userSocketId).emit("friendsRequest", newData)
     } catch (err) {
       console.log("好友请求信息数据库存储失败")
@@ -86,7 +84,7 @@ export const agreeRequest = (...props: Props) => {
       try {
         await FriendsService.createFriend(user_id, friend_id)
         await FriendsService.createFriend(friend_id, user_id)
-        await NoticeService.updateNotice(notice_id, true, "01")
+        await NoticeService.updateNotice(notice_id, 1)
 
         const userRes = await UserService.queryUser({ user_id }, [
           "nick_name",
@@ -123,7 +121,7 @@ export const rejectRequest = (...props: Props) => {
     async (notice_id: string, friend_id: string, user_id: string) => {
       const userSocketId = socketIdMap.get(friend_id)
       try {
-        await NoticeService.updateNotice(notice_id, true, "0")
+        await NoticeService.updateNotice(notice_id, 1)
         const userRes = await UserService.queryUser({ user_id }, [
           "nick_name",
           "avatar",

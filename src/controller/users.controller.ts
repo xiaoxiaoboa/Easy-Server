@@ -19,10 +19,11 @@ import FriendsService from "../service/friends.service.js"
 import { File } from "../types/upload.type.js"
 import { upload } from "../util/upload.js"
 import filesCheck from "../util/filesCheck.js"
+import FriendService from "../service/friends.service.js"
 
 const { userRegister, userLogin, queryUser, updateUser } = userService
 const { queryFavourite, deleteFavourite, newFav } = UserFavouriteService
-const { createFriend, queryFriends } = FriendsService
+const { createFriend, queryFriends, deleteFriend } = FriendsService
 
 class UsersController {
   /* 登录 */
@@ -106,7 +107,38 @@ class UsersController {
       ctx.body = response(1, "修改成功", result)
     } catch (err) {
       ctx.status = 500
-      console.log(err)
+      ctx.body = response(0, "修改失败", err)
+    }
+  }
+
+  /* 修改头像 */
+  async alterationAvatar(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
+    const data = ctx.request.body
+    const file = ctx.request.files
+    const fileName = (file?.avatar as File).newFilename
+    const newData = JSON.parse(data.user)
+
+    try {
+      const path = {
+        avatar: `/images/${newData.user_id}/${fileName}`
+      }
+
+      /* 更新数据库 */
+      await updateUser(newData.user_id, path)
+
+      /* 返回更新后的用户信息 */
+      const userRes = await queryUser({ user_id: newData.user_id })
+
+      /* 移动到用户文件夹 */
+      await fs.rename(
+        `${dir_upload}/${fileName}`,
+        `${dir_resource}${path_images}${newData.user_id}/${fileName}`
+      )
+
+      const { passwd, ...result } = userRes
+      ctx.body = response(1, "修改成功", result)
+    } catch (err) {
+      ctx.status = 500
       ctx.body = response(0, "修改失败", err)
     }
   }
@@ -175,18 +207,36 @@ class UsersController {
     const file = Object.values(files!)[0]
     let path: string = ""
     try {
-      /* 检查文件 */
-      // await filesCheck(files!)
-      if ((file as File).mimetype?.includes("image")) {
-        path = `${path_images}${data.user_id}/${(file as File).newFilename}`
-      } else if ((file as File).mimetype?.includes("video")) {
-        path = `${path_videos}${data.user_id}/${(file as File).newFilename}`
+      const friendRes = await FriendService.friendShip(data.user_id, data.friend_id)
+      if (friendRes || data.isGroup) {
+        /* 检查文件 */
+        // await filesCheck(files!)
+        if ((file as File).mimetype?.includes("image")) {
+          path = `${path_images}${data.user_id}/${(file as File).newFilename}`
+        } else if ((file as File).mimetype?.includes("video")) {
+          path = `${path_videos}${data.user_id}/${(file as File).newFilename}`
+        }
+        await upload(files!, data.user_id)
+        ctx.body = response(1, "上传图片", path)
+      } else {
+        console.log('@')
+        throw Error("不能上传，你和对方不是双向好友")
       }
-      await upload(files!, data.user_id)
-      ctx.body = response(1, "上传图片", path)
     } catch (err) {
       ctx.status = 500
       ctx.body = response(0, "上传失败", `${err}`)
+    }
+  }
+
+  /* 删除好友 */
+  async delFriend(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
+    const data = ctx.request.body
+    try {
+      await deleteFriend(data.user_id, data.friend_id)
+      ctx.body = response(1, "删除成功", null)
+    } catch (err) {
+      ctx.status = 500
+      ctx.body = response(0, "删除失败", `${err}`)
     }
   }
 }

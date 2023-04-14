@@ -23,6 +23,18 @@ class Feed_CommentService {
       throw Error("", { cause: err })
     }
   }
+
+  /* 查评论 */
+  async queryOneComment(comment_id: string) {
+    try {
+      const res = await Feed_Comment.findOne({
+        where: { comment_id }
+      })
+      return res?.dataValues
+    } catch (err) {
+       throw Error("", { cause: err })
+    }
+  }
 }
 
 export default new Feed_CommentService()

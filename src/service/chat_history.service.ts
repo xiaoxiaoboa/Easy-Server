@@ -118,10 +118,10 @@ class ChatHistoryService {
             source: {},
             createdAt: ""
           }
-          ;(newData.notice_id = groups.find(i => i.group_id === item.to_id).group_id),
-            (newData.target_id = groups.find(i => i.group_id === item.to_id).group_id),
-            (newData.source_id = item.user_id),
-            (newData.message = item)
+          newData.notice_id = groups.find(i => i.group_id === item.to_id).group_id
+          newData.target_id = groups.find(i => i.group_id === item.to_id).group_id
+          newData.source_id = item.user_id
+          newData.message = item
           newData.total = item.total
           newData.createdAt = item.createdAt
           newData.source = {

@@ -29,7 +29,7 @@ const app = new Koa()
 const server = createServer(app.callback())
 
 export const io = new Server(server, {
-  cors: { origin: ["http://localhost:5173", "http://localhost:4173"] }
+  cors: { origin: "*" }
 })
 
 app
@@ -42,7 +42,7 @@ app
       multipart: true,
       formidable: {
         uploadDir: `${process.cwd()}/data/upload`,
-        keepExtensions: true
+        // keepExtensions: true
       }
     })
   )
@@ -71,7 +71,6 @@ const OnChat = (socket: Socket) => {
 }
 
 const OnGroupChat = (socket: Socket) => {
-  // console.log("有程序连接进group了")
 
   groupChat(io, socket)
   groupChatHistory(io, socket)

@@ -17,7 +17,9 @@ const {
   queryUser,
   favourite,
   getFriends,
-  messageUpload
+  messageUpload,
+  alterationAvatar,
+  delFriend
 } = usersController
 
 usersRouter
@@ -31,6 +33,8 @@ usersRouter
   .post("/read", auth, updateNotice)
   .post("/notice", auth, notice)
   .post("/message_upload", auth, messageUpload)
+  .post("/avatar", auth, alterationAvatar)
+  .post("/del_friend", auth, delFriend)
 
 /* 测试token */
 usersRouter.post("/test", auth, (ctx, next) => {

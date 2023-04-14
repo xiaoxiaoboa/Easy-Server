@@ -39,7 +39,6 @@ export const groupChat = async (...props: Props) => {
       })
       /* 转发给群组 */
       socket.to(room_id).emit("group_messages", params, async (err: any, res: any) => {
-        console.log(res)
         if (res.length === 0) {
           /* 新消息提醒 */
           const groupRes = await ChatGroupService.queryGroup(params.to_id)
@@ -55,7 +54,10 @@ export const groupChat = async (...props: Props) => {
               nick_name: groupRes.group_name,
               user_id: groupRes.group_id
             },
-            message: messageRes,
+            message: {
+              ...messageRes.dataValues,
+              conversation_id: params.conversation_id
+            },
             createdAt: messageRes.dataValues.createdAt
           }
           io.of("/").to(room_id).emit("new_notice_message", newData)

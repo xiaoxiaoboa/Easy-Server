@@ -12,7 +12,8 @@ const {
   publishComment,
   queryFav,
   deleteComment,
-  querAttaches
+  querAttaches,
+  queryOneFeed
 } = feedController
 
 const feedRouter = new Router()
@@ -28,5 +29,6 @@ feedRouter
   .post("/feed_fav", auth, queryFav)
   .post("/comment_delete", auth, deleteComment)
   .post("/feed_attaches", auth, querAttaches)
+  .post("/feed_queryone", auth, queryOneFeed)
 
 export default feedRouter

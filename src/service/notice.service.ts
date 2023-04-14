@@ -73,7 +73,6 @@ class NoticeController {
       }
       return res
     } catch (err) {
-      console.log(err)
       throw Error("", { cause: err })
     }
   }
@@ -99,12 +98,14 @@ class NoticeController {
       const res = await Notice.findAll({
         where: {
           target_id,
+          source_id: {
+            [Op.ne]: target_id
+          },
           [Op.or]: [{ type: { [Op.like]: "0%" } }, { type: { [Op.in]: ["2", "3"] } }],
           done: 0
         },
         order: [["createdAt", "DESC"]]
       })
-
       return res
     } catch (err) {
       throw Error("", { cause: err })
@@ -112,9 +113,9 @@ class NoticeController {
   }
 
   /* 更新 */
-  async updateNotice(notice_id: string, done: boolean, type?: string) {
+  async updateNotice(notice_id: string, done: number) {
     try {
-      const res = await Notice.update({ done, type }, { where: { notice_id } })
+      const res = await Notice.update({ done }, { where: { notice_id } })
       return res
     } catch (err) {
       throw Error("", { cause: err })

@@ -14,15 +14,44 @@ class FriendsService {
     }
   }
 
+  /* 查询用户的好友 */
   async queryFriends(user_id: string) {
     try {
-      const res = await seq.query(
+      const myFriends = await seq.query(
         `SELECT friends.user_id,friends.friend_id,friends.createdAt, users.avatar,users.nick_name FROM friends LEFT JOIN users  ON (users.user_id = friends.friend_id) WHERE friends.user_id = '${user_id}'`,
         { raw: true, type: QueryTypes.SELECT }
       )
+      const friendToMe = await Friends.findAll({
+        where: { friend_id: user_id },
+        attributes: ["user_id"]
+      })
+      return { myFriends, friendToMe: friendToMe.map(i => i.dataValues.user_id) }
+    } catch (err) {
+      throw Error("", { cause: err })
+    }
+  }
+
+  /* 删除好友 */
+  async deleteFriend(user_id: string, friend_id: string) {
+    try {
+      const res = await Friends.destroy({
+        where: { user_id, friend_id }
+      })
       return res
     } catch (err) {
-      console.log(err)
+      throw Error("", { cause: err })
+    }
+  }
+
+  /* 确认好友关系 */
+  async friendShip(user_id: string, friend_id: string) {
+    try {
+      const res = await Friends.findOne({
+        where: { user_id, friend_id }
+      })
+
+      return res
+    } catch (err) {
       throw Error("", { cause: err })
     }
   }

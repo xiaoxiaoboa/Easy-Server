@@ -87,7 +87,6 @@ class FeedController {
       ctx.body = response(1, "获取全部帖子成功", res)
     } catch (err) {
       ctx.status = 500
-      console.log(err)
       ctx.body = `${err}`
     }
   }
@@ -131,22 +130,23 @@ class FeedController {
             notice_id: nanoid(10),
             source_id: data.user_id,
             target_id: data.feed_userId,
-            desc: data.user_id,
+            desc: data.feed_id,
             type: "3"
           })
           const newData = {
             ...noticeRes,
             source: userRes,
-            msg: "给你的帖子点赞啦"
+            msg: "给你的帖子点赞啦",
+            feed_id: data.feed_id
           }
-
-          io.of("/").to(socketIdMap.get(data.feed_userId)).emit("notice", newData)
+          if (data.user_id !== data.feed_userId) {
+            io.of("/").to(socketIdMap.get(data.feed_userId)).emit("notice", newData)
+          }
         }
         ctx.body = response(1, "点赞成功", null)
       }
     } catch (err) {
       ctx.status = 500
-      console.log(err)
       ctx.body = response(0, "点赞失败", `${err}`)
     }
   }
@@ -184,7 +184,6 @@ class FeedController {
       ctx.body = response(1, "获取所有评论", res)
     } catch (err) {
       ctx.status = 500
-      console.log(err)
       ctx.body = response(0, "获取评论失败", `${err}`)
     }
   }
@@ -203,7 +202,7 @@ class FeedController {
         notice_id: nanoid(10),
         source_id: data.user_id,
         target_id: data.feed_userId,
-        desc: data.user_id,
+        desc: res.comment_id,
         type: "2"
       })
 
@@ -211,14 +210,16 @@ class FeedController {
         ...noticeRes,
         source: userRes,
         msg: "给你的帖子评论啦",
-        comment_msg: data.comment
+        comment_msg: data.comment,
+        feed_id: res.feed_id
       }
 
-      io.of("/").to(socketIdMap.get(data.feed_userId)).emit("notice", newData)
+      if (data.feed_userId !== data.user_id) {
+        io.of("/").to(socketIdMap.get(data.feed_userId)).emit("notice", newData)
+      }
       ctx.body = response(1, "发布评论", null)
     } catch (err) {
       ctx.status = 500
-      console.log(err)
       ctx.body = response(0, "发布评论失败", `${err}`)
     }
   }
@@ -229,11 +230,9 @@ class FeedController {
     try {
       const res = await queryFavouriteFeed(data.user_id, data.limit, data.offset)
 
-      console.log(res)
       ctx.body = response(1, "获取收藏的帖子", res)
     } catch (err) {
       ctx.status = 500
-      console.log(err)
       ctx.body = response(0, "获取收藏的帖子", `${err}`)
     }
   }
@@ -259,6 +258,18 @@ class FeedController {
     } catch (err) {
       ctx.status = 500
       ctx.body = response(0, "获取失败", `${err}`)
+    }
+  }
+
+  /* 获取某个帖子 */
+  async queryOneFeed(ctx: CommonControllerCTX, next: CommonControllerNEXT) {
+    const data = ctx.request.body
+    try {
+      const res = await queryOneFeed(data.feed_id)
+      ctx.body = response(1, "查找成功", res)
+    } catch (err) {
+      ctx.status = 500
+      ctx.body = response(0, "查找失败", `${err}`)
     }
   }
 }
