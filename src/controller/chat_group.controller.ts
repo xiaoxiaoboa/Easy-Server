@@ -41,6 +41,10 @@ class ChatGroupController {
         recursive: true
       })
       await upload(files!, newGroupData.group_id)
+
+      
+
+
       ctx.body = response(1, "创建群组", result)
     } catch (err) {
       ctx.status = 500

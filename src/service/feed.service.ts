@@ -7,7 +7,7 @@ import {} from "../types/feed_attach.type.js"
 import { Feed_LikedType } from "../types/feed_liked.type.js"
 import User_Favourite from "../model/user_favourite.model.js"
 import seq from "../db/seq.js"
-import { QueryUserFeedsType } from "feed.type.js"
+import { FeedType, QueryUserFeedsType } from "feed.type.js"
 import { QueryTypes, Transaction } from "sequelize"
 
 class FeedService {
@@ -49,16 +49,33 @@ class FeedService {
 
       return allFeeds
     } catch (err) {
-      console.log(err)
       throw Error("", { cause: err })
     }
   }
 
   /* 查找一个帖子 */
-  async queryOneFeed(feed_id: string): Promise<any> {
+  async queryOneFeed(feed_id: string): Promise<FeedType> {
     try {
       const res = await Feed.findOne({
-        where: { feed_id }
+        where: { feed_id },
+        include: [
+          Feed_attach,
+          Feed_Liked,
+          User_Favourite,
+          { model: User, attributes: ["user_id", "nick_name", "avatar"] }
+        ],
+        attributes: {
+          include: [
+            /* 查询每个帖子的评论数量 */
+            [
+              seq.literal(
+                `(SELECT COUNT(*) FROM feed_comment WHERE feed_comment.feed_id = feed.feed_id)`
+              ),
+              "comment_count"
+            ]
+          ]
+        },
+        order: [["createdAt", "DESC"]]
       })
       return res?.dataValues
     } catch (err) {

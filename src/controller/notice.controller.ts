@@ -2,6 +2,7 @@ import response from "../util/response.js"
 import { CommonControllerCTX, CommonControllerNEXT } from "types.js"
 import NoticeService from "../service/notice.service.js"
 import UserService from "../service/user.service.js"
+import CommentService from "../service/feed_comment.service.js"
 
 /* 查询notice未读私聊消息 */
 export const notice_message = async (
@@ -11,6 +12,7 @@ export const notice_message = async (
   const data = ctx.request.body
   try {
     const res = await NoticeService.queryMessageNotice(data.user_id, data.type)
+    console.log(res)
     ctx.body = response(1, "查询到了未读消息", res)
   } catch (err) {
     ctx.status = 500
@@ -43,10 +45,13 @@ export const notice = async (ctx: CommonControllerCTX, next: CommonControllerNEX
   try {
     const res = await NoticeService.queryNotice(data.target_id)
     if (res.length > 0) {
-      const user_ids = res.map(i => i.dataValues.desc)
+      const user_ids = res.map(i => i.dataValues.source_id)
       const userRes: any[] = await UserService.queryManyUsers(user_ids)
       for (const item of res) {
-        item.dataValues.source = userRes.find(i => i.user_id === item.dataValues.desc)
+        item.dataValues.source = userRes.find(
+          i => i.user_id === item.dataValues.source_id
+        )
+
         switch (item.dataValues.type) {
           case "0":
             item.dataValues.msg = "申请成为你的好友"
@@ -58,10 +63,15 @@ export const notice = async (ctx: CommonControllerCTX, next: CommonControllerNEX
             item.dataValues.msg = "拒绝了你的好友申请"
             break
           case "2":
+            const res = await CommentService.queryOneComment(item.dataValues.desc)
+            item.dataValues.feed_id = res.feed_id
+            item.dataValues.comment_msg = res.comment
+
             item.dataValues.msg = "给你的帖子评论啦"
-            
+
             break
           case "3":
+            item.dataValues.feed_id = item.dataValues.desc
             item.dataValues.msg = "给你的帖子点赞啦"
             break
           default:
@@ -88,7 +98,7 @@ export const notice = async (ctx: CommonControllerCTX, next: CommonControllerNEX
   00  拒绝好友         拒绝信息
 
   1 聊天消息           {user_id,msg}
-  2 评论消息           {user_id,msg}   21已读
+  2 评论消息           {user_id,msg}   
   3 点赞消息           user_id   
   
 */

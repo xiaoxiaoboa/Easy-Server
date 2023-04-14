@@ -7,7 +7,6 @@ import { File } from "../types/upload.type.js"
 const compressImg = async (ctx: CommonControllerCTX, next: CommonControllerNEXT) => {
   const data = ctx.request.files
   const file = (data as any).file as File
-
   try {
     const buffer = await sharp(file.filepath)
       .blur(60)
