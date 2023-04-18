@@ -18,11 +18,11 @@ export const connectd_chat = (...props: Props) => {
   const [io, socket] = props
 
   socket.on("connected", async (socket_id: string, user_id: string) => {
-    console.log("上线了")
+    console.log(socket.id, "上线了")
     socketIdMap.set(user_id, socket_id)
   })
   socket.on("disconnect", () => {
-    console.log("下线了")
+    console.log(socket.id, "下线了")
   })
 }
 
@@ -45,14 +45,15 @@ export function privateChat(...props: Props) {
 
   /* 监听私聊消息 */
   socket.on("private_chat", async (params: MessageType, callback) => {
+    /* 获取对方socketid */
     const toSocket_id = socketIdMap.get(params.to_id)
 
     try {
       const { createdAt, user, ...result } = params
+      /* 是否为好友关系 */
       const friendRes = await FriendService.friendShip(params.to_id, params.user_id)
-      const isGroup = await ChatGroupService.queryGroup(params.to_id)
 
-      if (friendRes || isGroup) {
+      if (friendRes) {
         /* 存储 */
         const messageRes = await ChatHistoryService.newMessage({
           ...result,
@@ -67,7 +68,6 @@ export function privateChat(...props: Props) {
           .to(toSocket_id)
           .timeout(1000)
           .emit("private_message", params, async (err: any, res: any) => {
-            // console.log(res, err)
             if (res.length === 0) {
               const newNoticeData = {
                 notice_id: nanoid(10),
@@ -100,7 +100,6 @@ export function privateChat(...props: Props) {
                 .to(notice_socketIds.get(params.to_id))
                 .emit("new_notice_message", newData)
             } else if (res[0] !== "nosave") {
-              console.log(res[0])
               const newData = {
                 notice_id: nanoid(10),
                 target_id: params.to_id,

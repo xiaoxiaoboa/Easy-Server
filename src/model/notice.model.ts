@@ -30,7 +30,7 @@ const Notice = seq.define(
       comment: "通知类型"
     },
     desc: {
-      type: DataTypes.TEXT,
+      type: DataTypes.STRING,
       allowNull: false,
       unique: false,
       comment: "内容"

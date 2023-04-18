@@ -13,4 +13,5 @@ export interface ResponseType<T> {
   code: number
   message: string
   data: T
+  more?: boolean // 临时给web端首页帖子用
 }

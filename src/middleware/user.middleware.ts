@@ -16,11 +16,11 @@ export const loginIsExistVerify = async (
   try {
     const existedData = await queryUser({ email: data.email })
     if (!existedData) {
-      ctx.body = response(0, "用户不存在", data)
-      return
+      throw Error("")
     }
   } catch (err) {
-    ctx.body = response(1, "验证用户出错，请重试", { data, err })
+    ctx.status = 500
+    ctx.body = response(0, "用户不存在", { data, err })
     return
   }
   await next()
