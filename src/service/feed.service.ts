@@ -47,7 +47,9 @@ class FeedService {
         order: [["createdAt", "DESC"]]
       })
 
-      return allFeeds
+      const total = await Feed.count()
+
+      return { more: offset + allFeeds.length < total, feeds: allFeeds }
     } catch (err) {
       throw Error("", { cause: err })
     }
@@ -186,6 +188,9 @@ class FeedService {
           }
         ]
       })
+      const total = await User_Favourite.count()
+
+      // return { more: offset + res.length < total, feeds: res }
       return res
     } catch (err) {
       throw Error("", { cause: err })

@@ -20,6 +20,7 @@ export const connected_root = (...props: Props) => {
   socket.on("connected", async (socket_id: string, user_id: string) => {
     await joinRoom(user_id, socket)
     socketIdMap.set(user_id, socket_id)
+    console.log('notice',user_id)
   })
 }
 /* 下线 */

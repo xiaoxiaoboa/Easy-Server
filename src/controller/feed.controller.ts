@@ -39,6 +39,7 @@ class FeedController {
     const files = ctx.request.files
     const user_info = ctx.state.user
 
+    /* 反序列化数据 */
     const feedUser = JSON.parse(data.data)
 
     const feed_id = nanoid(12)
@@ -99,7 +100,7 @@ class FeedController {
     try {
       const res = await getAllFeeds(limit, offset)
 
-      ctx.body = response(1, "获取成功", res)
+      ctx.body = response(1, "获取成功", res.feeds, res.more)
     } catch (err) {
       ctx.status = 500
       ctx.body = response(0, "获取帖子失败", `${err}`)
@@ -229,6 +230,8 @@ class FeedController {
     const data = ctx.request.body
     try {
       const res = await queryFavouriteFeed(data.user_id, data.limit, data.offset)
+
+      console.log(res)
 
       ctx.body = response(1, "获取收藏的帖子", res)
     } catch (err) {

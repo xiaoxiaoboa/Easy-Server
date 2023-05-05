@@ -41,7 +41,7 @@ class UsersController {
         ctx.body = response(0, "登录失败，密码错误", data)
       }
     } catch (err) {
-      ctx.status = 400
+      ctx.status = 500
       ctx.body = response(0, "登录出错，请重试", { data, err })
     }
   }
@@ -52,20 +52,17 @@ class UsersController {
     const defaultValue = await getDefaultImg()
 
     try {
-      const rel = await seq.transaction(async () => {
-        const res = await userRegister({ ...data, ...defaultValue })
-        const { passwd, ...result } = res
+      const res = await userRegister({ ...data, ...defaultValue })
+      const { passwd, ...result } = res
 
-        await fs.mkdir(`${dir_resource}${path_images}${data.user_id}/`, {
-          recursive: true
-        })
-        await fs.mkdir(`${dir_resource}${path_videos}${data.user_id}/`, {
-          recursive: true
-        })
-
-        return result
+      await fs.mkdir(`${dir_resource}${path_images}${data.user_id}/`, {
+        recursive: true
       })
-      ctx.body = response(1, "注册成功", rel)
+      await fs.mkdir(`${dir_resource}${path_videos}${data.user_id}/`, {
+        recursive: true
+      })
+
+      ctx.body = response(1, "注册成功", result)
     } catch (err) {
       ctx.status = 400
       ctx.body = response(0, "注册出错，请重试", { data, err: `${err}` })
@@ -164,23 +161,19 @@ class UsersController {
     const data = ctx.request.body
 
     try {
-      const result = await seq.transaction(async () => {
-        const favs = await queryFavourite(data.user_id)
+      const favs = await queryFavourite(data.user_id)
 
-        const allIds = favs.map(item => item.feed_id)
+      const allIds = favs.map(item => item.feed_id)
 
-        const isFav = allIds.includes(data.feed_id)
+      const isFav = allIds.includes(data.feed_id)
 
-        if (isFav) {
-          await deleteFavourite(data.feed_id)
-        } else {
-          await newFav(data.user_id, data.feed_id)
-        }
+      if (isFav) {
+        await deleteFavourite(data.feed_id)
+      } else {
+        await newFav(data.user_id, data.feed_id)
+      }
 
-        return isFav
-      })
-
-      ctx.body = response(1, `${result ? "取消收藏" : "收藏成功"}`, null)
+      ctx.body = response(1, `${isFav ? "取消收藏" : "收藏成功"}`, null)
     } catch (err) {
       ctx.status = 500
 
@@ -219,7 +212,7 @@ class UsersController {
         await upload(files!, data.user_id)
         ctx.body = response(1, "上传图片", path)
       } else {
-        console.log('@')
+        console.log("@")
         throw Error("不能上传，你和对方不是双向好友")
       }
     } catch (err) {

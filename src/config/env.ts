@@ -13,4 +13,6 @@ const mysql = {
 
 const secert_key = process.env.SECRET_KEY
 
-export { port, mysql, secert_key }
+const baseUrl = process.env.APP_BASE_URL
+
+export { port, mysql, secert_key, baseUrl }

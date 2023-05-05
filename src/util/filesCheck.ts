@@ -9,8 +9,8 @@ const filesCheck = async (data: formidable.Files) => {
     if (files.length < 0) resolve("")
     for (const item of files) {
       const size = (item as File).size
-      if (size > 5 * 1024 * 1024) {
-        reject("文件太大，单个文件不能超过5M")
+      if (size > 10 * 1024 * 1024) {
+        reject("文件太大，单个文件不能超过10M")
       } else {
         if (mimetype.includes((item as File).mimetype!)) {
           reject("不支持此类型文件")

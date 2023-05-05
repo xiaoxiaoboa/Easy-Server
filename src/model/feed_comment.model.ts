@@ -25,8 +25,8 @@ const Feed_Comment = seq.define(
       comment: "评论ID"
     },
     comment: {
-      type: DataTypes.STRING,
-      allowNull: true,
+      type: DataTypes.TEXT,
+      allowNull: false,
       unique: false,
       comment: "feed的评论"
     }
