@@ -18,7 +18,7 @@ export const connectd_chat = (...props: Props) => {
   const [io, socket] = props
 
   socket.on("connected", async (socket_id: string, user_id: string) => {
-    console.log(socket.id, "上线了")
+    console.log(user_id, "上线了")
     socketIdMap.set(user_id, socket_id)
   })
   socket.on("disconnect", () => {
@@ -78,11 +78,12 @@ export function privateChat(...props: Props) {
               }
               /* 存储notice */
               const noticeRes = await NoticeService.createNotice(newNoticeData)
-
+              
               const userRes = await userService.queryUser(
                 { user_id: newNoticeData.source_id },
                 ["user_id", "avatar", "nick_name"]
-              )
+                )
+                console.log(res)
 
               const newData = {
                 ...newNoticeData,
